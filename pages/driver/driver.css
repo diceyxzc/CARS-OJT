@@ -1,0 +1,485 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    background: #f4f6f9;
+    color: #1a1a2e;
+    line-height: 1.6;
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 1540px;
+    margin: 0 auto;
+    padding: 10px 24px;  
+}
+
+/* Navbar */
+.navbar {
+    background: #1a237e;
+    padding: 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+}
+
+.navbar .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 64px;  
+    padding: 0 1px;
+    max-width: 1470px;
+}
+
+.navbar-brand {
+    font-size: 1.25rem;  
+    font-weight: 700;
+    color: white;
+    text-decoration: none;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.navbar-brand span {
+    color: #4fc3f7;
+}
+
+/* Header */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;  /* Changed from 20px to 8px */
+    margin-top: 0;  /* Added - remove top margin */
+    flex-wrap: wrap;
+    gap: 8px;  /* Changed from 12px to 8px */
+    padding-top: 2px;  /* Added - minimal top padding */
+}
+
+.page-header h1 {
+    font-size: 1.4rem;  /* Slightly smaller */
+    font-weight: 700;
+    color: #1a237e;
+    margin: 0;  /* Added - remove default margin */
+}
+
+.page-header .sub {
+    color: #6c757d;
+    font-size: 0.85rem;  /* Slightly smaller */
+    margin: 0;  /* Added - remove default margin */
+}
+
+/* Week Navigation */
+.week-nav {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 12px;  /* Changed from 20px to 12px */
+    margin-top: 2px;  /* Added - minimal top margin */
+}
+
+.week-nav .btn {
+    padding: 6px 16px;  /* Smaller padding */
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+    font-family: inherit;
+    font-size: 0.8rem;  /* Slightly smaller */
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.week-nav .btn-primary {
+    background: #1a237e;
+    color: white;
+}
+
+.week-nav .btn-primary:hover {
+    background: #283593;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(26, 35, 126, 0.3);
+}
+
+.week-nav .btn-outline {
+    background: #e9ecef;
+    color: #1a1a2e;
+}
+
+.week-nav .btn-outline:hover {
+    background: #dee2e6;
+}
+
+.week-nav .week-label {
+    font-weight: 600;
+    color: #1a237e;
+    font-size: 0.9rem;  /* Slightly smaller */
+    padding: 0 8px;  /* Smaller padding */
+}
+
+/* Schedule Grid */
+.schedule-wrapper {
+    overflow-x: auto;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+    padding: 4px;
+}
+
+.schedule-grid {
+    display: grid;
+    grid-template-columns: 180px repeat(7, 1fr);
+    min-width: 900px;
+}
+
+/* Header Row */
+.schedule-header {
+    display: contents;
+}
+
+.schedule-header .cell {
+    padding: 10px 10px;  /* Smaller padding */
+    font-weight: 700;
+    font-size: 0.75rem;  /* Smaller font */
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6c757d;
+    border-bottom: 2px solid #e9ecef;
+    background: #f8f9fa;
+    text-align: center;
+}
+
+.schedule-header .cell:first-child {
+    text-align: left;
+    padding-left: 16px;
+}
+
+.schedule-header .cell.today {
+    background: #e8f0fe;
+    color: #1a237e;
+}
+
+/* Row */
+.schedule-row {
+    display: contents;
+}
+
+.schedule-row .cell {
+    padding: 8px 6px;  /* Smaller padding */
+    border-bottom: 1px solid #f1f3f5;
+    vertical-align: top;
+    min-height: 70px;  /* Smaller min-height */
+}
+
+.schedule-row .cell.driver-name {
+    font-weight: 600;
+    font-size: 0.8rem;  /* Smaller font */
+    color: #1a237e;
+    padding-left: 16px;
+    border-right: 1px solid #e9ecef;
+    background: #fafbfc;
+}
+
+.schedule-row .cell.driver-name .car-info {
+    font-weight: 400;
+    font-size: 0.55rem;  /* Smaller font */
+    color: #6c757d;
+    display: block;
+    margin-top: 2px;
+}
+
+.schedule-row .cell.driver-name .car-info .plate {
+    color: #c62828;
+    font-weight: 500;
+}
+
+/* Trip Card */
+.trip-card {
+    background: #f8f9fa;
+    border-radius: 6px;
+    padding: 4px 6px;  /* Smaller padding */
+    margin-bottom: 3px;  /* Smaller margin */
+    font-size: 0.65rem;  /* Smaller font */
+    border-left: 3px solid #1a237e;
+    transition: all 0.2s;
+    cursor: default;
+}
+
+.trip-card:hover {
+    background: #e9ecef;
+    transform: translateX(2px);
+}
+
+.trip-card .trip-time {
+    font-weight: 600;
+    color: #1a237e;
+    font-size: 0.6rem;  /* Smaller font */
+}
+
+.trip-card .trip-location {
+    color: #6c757d;
+    font-size: 0.55rem;  /* Smaller font */
+    display: block;
+    margin-top: 1px;
+}
+
+.trip-card .trip-passengers {
+    font-size: 0.5rem;  /* Smaller font */
+    color: #6c757d;
+    margin-top: 2px;
+}
+
+.trip-card .trip-passengers .pax-tag {
+    display: inline-block;
+    background: #e8f0fe;
+    color: #1a237e;
+    padding: 0px 6px;
+    border-radius: 8px;
+    margin: 1px 2px;
+    font-size: 0.45rem;  /* Smaller font */
+}
+
+.trip-card .trip-requestor {
+    font-size: 0.5rem;  /* Smaller font */
+    color: #2e94ee;
+    display: block;
+}
+
+.trip-card .trip-status {
+    display: inline-block;
+    padding: 0px 6px;
+    border-radius: 8px;
+    font-size: 0.45rem;  /* Smaller font */
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-top: 2px;
+}
+
+.trip-card .trip-status.approved {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.trip-card .trip-status.in_progress {
+    background: #fff8e1;
+    color: #f57c00;
+}
+
+.trip-card .trip-status.completed {
+    background: #e3f2fd;
+    color: #0d47a1;
+}
+
+.empty-cell {
+    color: #adb5bd;
+    font-size: 0.6rem;  /* Smaller font */
+    text-align: center;
+    padding: 10px 0;  /* Smaller padding */
+}
+
+/* Legend */
+.legend {
+    display: flex;
+    gap: 16px;  /* Smaller gap */
+    flex-wrap: wrap;
+    margin: 8px 0 4px 0;  /* Smaller margin */
+    padding: 8px 14px;  /* Smaller padding */
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.7rem;  /* Smaller font */
+    color: #6c757d;
+}
+
+.legend-item .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.legend-item .dot.approved {
+    background: #2e7d32;
+}
+.legend-item .dot.in_progress {
+    background: #f57c00;
+}
+.legend-item .dot.completed {
+    background: #0d47a1;
+}
+
+/* ----- Trip Time Row ----- */
+.trip-card .trip-time-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.trip-card .trip-time {
+    font-weight: 600;
+    color: #1a237e;
+    font-size: 0.6rem;  /* Smaller font */
+}
+
+.trip-card .trip-time-dropoff {
+    font-size: 0.5rem;  /* Smaller font */
+    color: #6c757d;
+    font-weight: 400;
+}
+
+.trip-card .trip-time-dropoff::before {
+    content: "→ ";
+    color: #adb5bd;
+}
+
+.trip-card .trip-location-dropoff {
+    color: #6c757d;
+    font-size: 0.5rem;  /* Smaller font */
+}
+
+.trip-card .trip-location-dropoff::before {
+    content: "→ ";
+    color: #adb5bd;
+}
+
+/* Make trip card slightly taller to accommodate extra info */
+.trip-card {
+    padding: 4px 6px;  /* Smaller padding */
+    margin-bottom: 3px;  /* Smaller margin */
+    font-size: 0.65rem;  /* Smaller font */
+    border-left: 3px solid #1a237e;
+    border-radius: 6px;
+    background: #f8f9fa;
+    transition: all 0.2s;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .trip-card .trip-time {
+        font-size: 0.5rem;
+    }
+    .trip-card .trip-time-dropoff {
+        font-size: 0.45rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .trip-card .trip-time-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0px;
+    }
+    .trip-card .trip-time {
+        font-size: 0.45rem;
+    }
+    .trip-card .trip-time-dropoff {
+        font-size: 0.4rem;
+    }
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .schedule-grid {
+        grid-template-columns: 150px repeat(7, 1fr);
+        min-width: 800px;
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 8px 12px;  /* Smaller padding */
+    }
+    .page-header h1 {
+        font-size: 1.1rem;  /* Smaller font */
+    }
+    .page-header .sub {
+        font-size: 0.75rem;  /* Smaller font */
+    }
+    .schedule-grid {
+        grid-template-columns: 120px repeat(7, 1fr);
+        min-width: 700px;
+        font-size: 0.65rem;
+    }
+    .schedule-row .cell.driver-name {
+        font-size: 0.65rem;
+        padding-left: 8px;
+    }
+    .schedule-header .cell {
+        font-size: 0.55rem;
+        padding: 8px 4px;  /* Smaller padding */
+    }
+    .trip-card {
+        padding: 3px 4px;  /* Smaller padding */
+        font-size: 0.55rem;
+    }
+    .trip-card .trip-time {
+        font-size: 0.5rem;
+    }
+    .trip-card .trip-location {
+        font-size: 0.45rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 6px 8px;  /* Smaller padding */
+    }
+    .week-nav .btn {
+        padding: 4px 10px;  /* Smaller padding */
+        font-size: 0.7rem;
+    }
+    .week-nav .week-label {
+        font-size: 0.75rem;
+    }
+    .schedule-grid {
+        grid-template-columns: 80px repeat(7, 1fr);
+        min-width: 600px;
+        font-size: 0.55rem;
+    }
+    .schedule-row .cell.driver-name {
+        font-size: 0.55rem;
+        padding-left: 4px;
+    }
+    .schedule-row .cell.driver-name .car-info {
+        font-size: 0.45rem;
+    }
+    .schedule-header .cell {
+        font-size: 0.45rem;
+        padding: 4px 2px;  /* Smaller padding */
+    }
+    .trip-card {
+        padding: 2px 3px;  /* Smaller padding */
+        font-size: 0.45rem;
+        border-left-width: 2px;
+    }
+    .trip-card .trip-time {
+        font-size: 0.45rem;
+    }
+    .trip-card .trip-location {
+        font-size: 0.4rem;
+    }
+    .trip-card .trip-passengers .pax-tag {
+        font-size: 0.35rem;
+        padding: 0px 3px;
+    }
+}

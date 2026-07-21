@@ -1,0 +1,27 @@
+# .htaccess in project root
+RewriteEngine On
+
+# Redirect root to public/index.php
+RewriteRule ^$ public/index.php [L]
+
+# Redirect /login to public/login.php
+RewriteRule ^login$ public/login.php [L]
+
+# Hide .php extension
+RewriteCond %{REQUEST_FILENAME}.php -f
+RewriteRule ^(.*)$ $1.php [L]
+
+# Admin area
+RewriteRule ^admin/dashboard$ admin/dashboard.php [L]
+RewriteRule ^admin/requests$ admin/requests.php [L]
+RewriteRule ^admin/schedule$ admin/schedule.php [L]
+RewriteRule ^admin/driver-vehicle$ admin/driver_vehicle.php [L]
+RewriteRule ^admin/reports$ admin/reports.php [L]
+
+# API endpoints
+RewriteRule ^api/trip-status$ admin/api/trip_status.php [L]
+RewriteRule ^api/requests-status$ admin/api/requests_status.php [L]
+RewriteRule ^api/schedule-status$ admin/api/schedule_status.php [L]
+RewriteRule ^api/driver-schedule$ admin/api/driver_schedule_status.php [L]
+RewriteRule ^api/car-status$ admin/api/car_status.php [L]
+RewriteRule ^api/available-drivers$ admin/api/available_drivers.php [L]
