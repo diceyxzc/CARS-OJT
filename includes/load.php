@@ -1,5 +1,5 @@
 <?php
-// includes/load.phpp
+// includes/load.php
 
 // 1. Start Session (but not for API if using token auth)
 if (session_status() === PHP_SESSION_NONE) {
