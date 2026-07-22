@@ -1,17 +1,11 @@
 <?php
 error_reporting(0);
 ini_set('display_errors', 0);
-
 session_start();
 require_once '../../config/db.php';
+require_admin();
 
-header('Content-Type: application/json');
 header('Cache-Control: no-cache, must-revalidate');
-
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin') {
-    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
-    exit();
-}
 
 $date = $_GET['date'] ?? date('Y-m-d');
 

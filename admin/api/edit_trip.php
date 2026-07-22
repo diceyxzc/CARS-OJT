@@ -1,11 +1,7 @@
 <?php
 session_start();
 require_once '../config/db.php';
-// Users that can Use the edit Function
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin') {
-    header('Location: ../login.php');
-    exit();
-}
+require_admin();
 
 $error = '';
 $success = '';

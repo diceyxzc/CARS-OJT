@@ -2,11 +2,9 @@
 error_reporting(0);
 ini_set('display_errors', 0);
 
-// Just include load.php - it handles session, database, and status updates
 require_once '../../includes/load.php';
 require_admin();
 
-header('Content-Type: application/json');
 header('Cache-Control: no-cache, must-revalidate');
 
 // ============================================================

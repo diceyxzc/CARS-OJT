@@ -3,8 +3,6 @@ session_start();
 require_once '../../includes/load.php';
 require_admin();
 
-header('Content-Type: application/json');
-
 // Check if driver and car are available for the requested date range
 // Returns list of dates with conflicts (coding days, car busy, driver busy)
 $driver_id = $_GET['driver_id'] ?? '';

@@ -1,13 +1,7 @@
 <?php
 session_start();
 require_once '../../includes/load.php';
-
-header('Content-Type: application/json');
-
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin') {
-    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
-    exit();
-}
+require_admin();
 
 /* Use to get Date, PickupTime, and Dropoff time of the system 
    While also using Pickuptime insted of system time to determine dropoff_time

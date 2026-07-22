@@ -229,7 +229,7 @@ foreach ($trips as $trip) {
         console.log('🚀 Driver schedule auto-update starting...');
         
         // Use absolute path for API
-        const apiUrl = '/admin/api/driver_schedule_status.php';
+        const apiUrl = '../admin/api/driver_schedule_status.php';
         let currentWeek = '<?= $week_start ?>';
         let updateInterval = null;
         let isFetching = false;

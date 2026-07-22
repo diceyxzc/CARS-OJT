@@ -2,16 +2,10 @@
 // admin/api/driver_schedule_status.php
 session_start();
 require_once '../../includes/load.php';
+require_admin();
 
-header('Content-Type: application/json');
 header('Cache-Control: no-cache, must-revalidate');
-
 date_default_timezone_set('Asia/Manila');
-
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin') {
-    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
-    exit();
-}
 
 $week_start = $_GET['week'] ?? date('Y-m-d');
 $week_start = date('Y-m-d', strtotime($week_start . ' - ' . (date('N', strtotime($week_start)) - 1) . ' days'));
