@@ -44,6 +44,7 @@ $counts = $pdo->prepare("
 $counts->execute([$date]);
 $status_counts = $counts->fetch();
 
+//Show the dispatch team all today's trips organized by status so they can monitor operations at a glance.
 echo json_encode([
     'success' => true,
     'data' => [

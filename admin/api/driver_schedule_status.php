@@ -42,7 +42,7 @@ $trips = $pdo->prepare("
 $trips->execute([$week_start, $week_end]);
 $trips_data = $trips->fetchAll();
 
-// Organize trips by day and driver
+// Organize trips by day and driver Also only initialize for active drivers
 $week_days = [];
 for ($i = 0; $i < 7; $i++) {
     $date = date('Y-m-d', strtotime($week_start . ' + ' . $i . ' days'));
@@ -52,7 +52,7 @@ for ($i = 0; $i < 7; $i++) {
         'drivers' => []
     ];
     
-    // Only initialize for active drivers
+
     foreach ($drivers as $driver) {
         $week_days[$date]['drivers'][$driver['driver_id']] = [
             'driver' => $driver,
@@ -78,6 +78,7 @@ foreach ($trips_data as $trip) {
     }
 }
 
+// Send a full weekly driver schedule with all trip assignments so the frontend can render a calendar view.
 echo json_encode([
     'success' => true,
     'data' => [

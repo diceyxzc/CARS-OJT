@@ -5,6 +5,8 @@ require_admin();
 
 header('Content-Type: application/json');
 
+// Check if driver and car are available for the requested date range
+// Returns list of dates with conflicts (coding days, car busy, driver busy)
 $driver_id = $_GET['driver_id'] ?? '';
 $start_date = $_GET['start_date'] ?? '';
 $end_date = $_GET['end_date'] ?? '';
@@ -81,6 +83,7 @@ while ($current <= $end && $day_count < $max_days) {
     $day_count++;
 }
 
+// Show the user what's wrong with this booking attempt and which dates are problematic.
 echo json_encode([
     'success' => true,
     'car_brand' => $driver_car['brand'],
