@@ -440,6 +440,234 @@ body {
     }
 }
 
+/* Modal Styles */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(5px);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-overlay.show {
+    display: flex;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { transform: translateY(30px) scale(0.95); opacity: 0; }
+    to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.modal-container {
+    background: #ffffff;
+    border-radius: 16px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 24px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.modal-header h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 0;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #999;
+    cursor: pointer;
+    padding: 0 8px;
+    transition: color 0.3s;
+}
+
+.modal-close:hover {
+    color: #dc3545;
+}
+
+.modal-body {
+    padding: 20px 24px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.modal-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 10px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 10px;
+}
+
+.modal-select-all {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    font-weight: 600;
+    font-size: 14px;
+    color: #1a1a2e;
+}
+
+.modal-select-all input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    margin-right: 8px;
+    cursor: pointer;
+}
+
+.modal-select-all label {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.modal-select-all span {
+    color: #6c757d;
+    font-weight: 400;
+}
+
+.modal-driver-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.modal-driver-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    transition: background 0.2s;
+    cursor: pointer;
+}
+
+.modal-driver-item:hover {
+    background: #e9ecef;
+}
+
+.modal-driver-item input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.modal-driver-item .driver-info {
+    flex: 1;
+}
+
+.modal-driver-item .driver-name {
+    font-weight: 600;
+    font-size: 13px;
+    color: #1a1a2e;
+}
+
+.modal-driver-item .driver-car {
+    font-size: 11px;
+    color: #6c757d;
+}
+
+.modal-driver-item .driver-status {
+    font-size: 9px;
+    padding: 2px 10px;
+    border-radius: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.modal-driver-item .driver-status.active {
+    background: #d4edda;
+    color: #155724;
+}
+
+.modal-driver-item .driver-status.inactive {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 24px;
+    border-top: 2px solid #f0f0f0;
+}
+
+.modal-footer .btn {
+    padding: 10px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.modal-footer .btn-primary {
+    background: #007bff;
+    color: white;
+}
+
+.modal-footer .btn-primary:hover {
+    background: #0069d9;
+}
+
+.modal-footer .btn-success {
+    background: #28a745;
+    color: white;
+}
+
+.modal-footer .btn-success:hover {
+    background: #218838;
+}
+
+.modal-footer .btn-secondary {
+    background: #e9ecef;
+    color: #333;
+}
+
+.modal-footer .btn-secondary:hover {
+    background: #dde0e3;
+}
+
 @media (max-width: 480px) {
     .container {
         padding: 6px 8px;  /* Smaller padding */

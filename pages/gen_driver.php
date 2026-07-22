@@ -119,6 +119,7 @@ foreach ($trips as $trip) {
 
         <!-- Week Navigation -->
         <div class="week-nav">
+            <button onclick="printSchedule()" class="btn btn-print" style="color:white; background: #28a745;">Print Schedule</button>
             <a href="#" class="btn btn-outline" id="prevWeek">◀ Previous</a>
             <a href="#" class="btn btn-primary" id="thisWeek">This Week</a>
             <a href="#" class="btn btn-outline" id="nextWeek">Next ▶</a>
@@ -225,6 +226,502 @@ foreach ($trips as $trip) {
 
     <!-- Auto-Update for Driver Schedule -->
     <script>
+    function printSchedule() {
+        // Store current week info
+        const weekLabel = document.getElementById('weekLabel').textContent;
+        const tripCount = document.getElementById('tripCount').textContent;
+        
+        // Get the schedule grid content
+        const scheduleContent = document.getElementById('scheduleGrid').innerHTML;
+        
+        // Open print window
+        const printWindow = window.open('', '_blank', 'width=1100,height=900');
+        
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Driver Weekly Schedule</title>
+                <style>
+                    * { margin: 0; padding: 0; box-sizing: border-box; }
+                    body {
+                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                        padding: 15px;
+                        background: #ffffff;
+                        color: #1a1a2e;
+                        font-size: 12px;
+                    }
+                    
+                    .print-header {
+                        background: #ffffff;
+                        padding: 10px 0 12px 0;
+                        margin-bottom: 12px;
+                        border-bottom: 2px solid #e8ecf1;
+                    }
+                    .print-header h1 {
+                        font-size: 22px;
+                        font-weight: 700;
+                        margin: 0;
+                        color: #1a1a2e;
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                        flex-wrap: wrap;
+                    }
+                    .print-header h1 span {
+                        background: #FFD700;
+                        color: #1a1a2e;
+                        font-size: 11px;
+                        padding: 2px 12px;
+                        border-radius: 20px;
+                        font-weight: 600;
+                    }
+                    .print-header .week-label {
+                        font-size: 13px;
+                        color: #6c757d;
+                        margin-top: 3px;
+                    }
+                    .print-header .meta {
+                        font-size: 11px;
+                        color: #adb5bd;
+                        margin-top: 2px;
+                    }
+                    
+                    .print-stats {
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 8px 20px;
+                        padding: 10px 0;
+                        background: transparent;
+                        margin-bottom: 12px;
+                        border-bottom: 1px solid #f0f0f0;
+                        align-items: center;
+                    }
+                    .print-stats .stat-item {
+                        display: flex;
+                        align-items: center;
+                        gap: 5px;
+                        font-size: 12px;
+                        color: #555;
+                    }
+                    .print-stats .stat-item strong {
+                        color: #1a1a2e;
+                        font-size: 13px;
+                        font-weight: 600;
+                    }
+                    .print-stats .stat-item .dot {
+                        width: 9px;
+                        height: 9px;
+                        border-radius: 50%;
+                        display: inline-block;
+                        flex-shrink: 0;
+                    }
+                    .dot-approved { background: #28a745; }
+                    .dot-in_progress { background: #ffc107; }
+                    .dot-pending { background: #007bff; }
+                    .dot-inactive { background: #dc3545; }
+                    .print-stats .stat-spacer { flex: 1; }
+                    .print-stats .stat-total {
+                        font-weight: 600;
+                        color: #1a1a2e;
+                        font-size: 12px;
+                    }
+                    
+                    .schedule-wrapper {
+                        background: white;
+                        border-radius: 0;
+                        padding: 0;
+                        border: 1px solid #e8ecf1;
+                        overflow: hidden;
+                    }
+                    
+                    .schedule-grid {
+                        display: flex;
+                        flex-direction: column;
+                        width: 100%;
+                        font-size: 11px;
+                    }
+                    
+                    .schedule-header {
+                        display: grid;
+                        grid-template-columns: 140px repeat(7, 1fr);
+                        background: #f8f9fa;
+                        border-bottom: 2px solid #1a1a2e;
+                        font-weight: 700;
+                        color: #1a1a2e;
+                    }
+                    .schedule-header .cell {
+                        padding: 8px 4px;
+                        text-align: center;
+                        font-size: 11px;
+                        border-right: 1px solid #e8ecf1;
+                        min-width: 0;
+                        word-break: break-word;
+                    }
+                    .schedule-header .cell:first-child {
+                        text-align: left;
+                        padding-left: 12px;
+                        border-right: 1px solid #e8ecf1;
+                    }
+                    .schedule-header .cell:last-child { border-right: none; }
+                    .schedule-header .cell .date-small {
+                        font-weight: 400;
+                        font-size: 9px;
+                        color: #6c757d;
+                        display: block;
+                        margin-top: 1px;
+                    }
+                    .schedule-header .cell.today {
+                        background: rgba(255, 193, 7, 0.12);
+                    }
+                    
+                    .schedule-row {
+                        display: grid;
+                        grid-template-columns: 140px repeat(7, 1fr);
+                        border-bottom: 1px solid #f0f0f0;
+                    }
+                    .schedule-row:last-child { border-bottom: none; }
+                    .schedule-row.inactive-driver { opacity: 0.5; }
+                    .schedule-row.inactive-driver .driver-name { color: #999; }
+                    
+                    .schedule-row .cell {
+                        padding: 6px 3px;
+                        text-align: center;
+                        border-right: 1px solid #f0f0f0;
+                        vertical-align: top;
+                        min-height: 55px;
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: center;
+                        align-items: center;
+                        min-width: 0;
+                        word-break: break-word;
+                    }
+                    .schedule-row .cell:first-child {
+                        text-align: left;
+                        padding-left: 12px;
+                        border-right: 1px solid #e8ecf1;
+                        display: block;
+                        min-height: auto;
+                    }
+                    .schedule-row .cell:last-child { border-right: none; }
+                    
+                    /* ===== DRIVER NAME - FIXED ===== */
+                    .driver-name .status-badge-top {
+                        display: inline-block;
+                        background: #dc3545;
+                        color: white;
+                        font-size: 8px;
+                        padding: 2px 12px;
+                        border-radius: 10px;
+                        font-weight: 700;
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
+                        margin-bottom: 4px;
+                        width: fit-content;
+                    }
+                    .driver-name .driver-fullname {
+                        font-weight: 700;
+                        font-size: 12px;
+                        color: #1a1a2e;
+                        display: block;
+                    }
+                    .driver-name .car-info {
+                        display: block;
+                        font-weight: 400;
+                        font-size: 9px;
+                        color: #6c757d;
+                        margin-top: 2px;
+                    }
+                    .driver-name .car-info .plate {
+                        color: #adb5bd;
+                    }
+                    /* ===== END DRIVER NAME FIX ===== */
+                    
+                    .trip-card {
+                        background: #f8f9fa;
+                        border-radius: 4px;
+                        padding: 4px 6px;
+                        margin-bottom: 2px;
+                        border-left: 3px solid #6c757d;
+                        text-align: left;
+                        font-size: 9px;
+                        width: 100%;
+                        max-width: 100%;
+                    }
+                    .trip-card:last-child { margin-bottom: 0; }
+                    .trip-card .trip-time-row {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        gap: 2px;
+                        flex-wrap: wrap;
+                    }
+                    .trip-card .trip-time {
+                        font-weight: 700;
+                        color: #1a1a2e;
+                        font-size: 9px;
+                    }
+                    .trip-card .trip-time-dropoff {
+                        color: #6c757d;
+                        font-size: 8px;
+                    }
+                    .trip-card .trip-location {
+                        display: block;
+                        font-size: 7px;
+                        color: #6c757d;
+                        margin-top: 1px;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                    }
+                    .trip-card .trip-location-dropoff {
+                        color: #adb5bd;
+                    }
+                    .trip-card .trip-status {
+                        display: inline-block;
+                        padding: 1px 6px;
+                        border-radius: 8px;
+                        font-size: 6px;
+                        font-weight: 700;
+                        text-transform: uppercase;
+                        letter-spacing: 0.3px;
+                        margin-top: 2px;
+                    }
+                    .trip-card .trip-status.approved {
+                        background: #d4edda;
+                        color: #155724;
+                    }
+                    .trip-card .trip-status.in_progress {
+                        background: #fff3cd;
+                        color: #856404;
+                    }
+                    .trip-card .trip-status.pending {
+                        background: #cce5ff;
+                        color: #004085;
+                    }
+                    .trip-card .trip-status.completed {
+                        background: #d1ecf1;
+                        color: #0c5460;
+                    }
+                    .trip-card .trip-status.cancelled {
+                        background: #f8d7da;
+                        color: #721c24;
+                    }
+                    
+                    .empty-cell {
+                        color: #dee2e6;
+                        font-size: 14px;
+                    }
+                    
+                    .footer {
+                        margin-top: 15px;
+                        padding: 10px 0;
+                        background: transparent;
+                        border-top: 1px solid #f0f0f0;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        font-size: 10px;
+                        color: #6c757d;
+                        flex-wrap: wrap;
+                        gap: 5px;
+                    }
+                    .footer .stats {
+                        font-weight: 600;
+                        color: #1a1a2e;
+                    }
+                    
+                    /* ============================================================
+                    KEEP SAME SIZE FOR BOTH PORTRAIT AND LANDSCAPE
+                    ============================================================ */
+                    @media print {
+                        body { 
+                            padding: 15px; 
+                        }
+                        
+                        .schedule-header {
+                            grid-template-columns: 140px repeat(7, 1fr);
+                        }
+                        .schedule-row {
+                            grid-template-columns: 140px repeat(7, 1fr);
+                        }
+                        
+                        .schedule-header .cell {
+                            font-size: 11px;
+                            padding: 8px 4px;
+                        }
+                        .schedule-header .cell .date-small {
+                            font-size: 9px;
+                        }
+                        
+                        .schedule-row .cell {
+                            min-height: 55px;
+                            padding: 6px 3px;
+                        }
+                        
+                        /* Driver Name - SAME SIZE */
+                        .driver-name .status-badge-top {
+                            font-size: 8px;
+                            padding: 2px 12px;
+                            margin-bottom: 4px;
+                        }
+                        .driver-name .driver-fullname {
+                            font-size: 12px;
+                        }
+                        .driver-name .car-info {
+                            font-size: 9px;
+                        }
+                        
+                        /* Trip Cards - SAME SIZE */
+                        .trip-card {
+                            font-size: 9px;
+                            padding: 4px 6px;
+                            border-left-width: 3px;
+                            margin-bottom: 2px;
+                        }
+                        .trip-card .trip-time {
+                            font-size: 9px;
+                        }
+                        .trip-card .trip-time-dropoff {
+                            font-size: 8px;
+                        }
+                        .trip-card .trip-location {
+                            font-size: 7px;
+                        }
+                        .trip-card .trip-status {
+                            font-size: 6px;
+                            padding: 1px 6px;
+                            border-radius: 8px;
+                        }
+                        
+                        .empty-cell {
+                            font-size: 14px;
+                        }
+                        
+                        .print-stats {
+                            gap: 8px 20px;
+                            padding: 10px 0;
+                        }
+                        .print-stats .stat-item {
+                            font-size: 12px;
+                        }
+                        .print-stats .stat-item strong {
+                            font-size: 13px;
+                        }
+                        .print-stats .stat-item .dot {
+                            width: 9px;
+                            height: 9px;
+                        }
+                        .print-stats .stat-total {
+                            font-size: 12px;
+                        }
+                        
+                        .print-header h1 {
+                            font-size: 22px;
+                        }
+                        .print-header .week-label {
+                            font-size: 13px;
+                        }
+                        .print-header .meta {
+                            font-size: 11px;
+                        }
+                        
+                        .footer {
+                            font-size: 10px;
+                            padding: 10px 0;
+                        }
+                        
+                        .schedule-header {
+                            -webkit-print-color-adjust: exact;
+                            print-color-adjust: exact;
+                        }
+                        .trip-card .trip-status {
+                            -webkit-print-color-adjust: exact;
+                            print-color-adjust: exact;
+                        }
+                        .schedule-row {
+                            page-break-inside: avoid;
+                        }
+                        .print-stats .stat-item .dot {
+                            -webkit-print-color-adjust: exact;
+                            print-color-adjust: exact;
+                        }
+                        .schedule-wrapper {
+                            border: 1px solid #dee2e6;
+                        }
+                        .driver-name .status-badge-top {
+                            -webkit-print-color-adjust: exact;
+                            print-color-adjust: exact;
+                        }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="print-header">
+                    <h1>
+                         Driver Weekly Schedule
+                    </h1>
+                    <div class="week-label">${weekLabel}</div>
+                    <div class="meta">Generated: ${new Date().toLocaleString()}</div>
+                </div>
+                
+                <div class="print-stats">
+                    <div class="stat-item">
+                        <span class="dot dot-approved"></span>
+                        <strong id="approvedCount">0</strong> Approved
+                    </div>
+                    <div class="stat-item">
+                        <span class="dot dot-in_progress"></span>
+                        <strong id="inProgressCount">0</strong> In Progress
+                    </div>
+                    <div class="stat-item">
+                        <span class="dot dot-pending"></span>
+                        <strong id="pendingCount">0</strong> Pending
+                    </div>
+                    <div class="stat-item">
+                        <span class="dot dot-inactive"></span>
+                        <strong id="inactiveCount">0</strong> Inactive Drivers
+                    </div>
+                    <div class="stat-spacer"></div>
+                    <div class="stat-total">${tripCount}</div>
+                </div>
+                
+                <div class="schedule-wrapper">
+                    <div class="schedule-grid">
+                        ${scheduleContent}
+                    </div>
+                </div>
+                
+                <div class="footer">
+                    <div class="stats">${tripCount}</div>
+                    <div>CARS System | ${new Date().toLocaleDateString()}</div>
+                </div>
+                
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const approved = document.querySelectorAll('.trip-status.approved').length;
+                        const inProgress = document.querySelectorAll('.trip-status.in_progress').length;
+                        const pending = document.querySelectorAll('.trip-status.pending').length;
+                        const inactive = document.querySelectorAll('.inactive-driver').length;
+                        
+                        document.getElementById('approvedCount').textContent = approved;
+                        document.getElementById('inProgressCount').textContent = inProgress;
+                        document.getElementById('pendingCount').textContent = pending;
+                        document.getElementById('inactiveCount').textContent = inactive;
+                    });
+                    
+                    window.onload = function() {
+                        window.print();
+                    }
+                <\/script>
+            </body>
+            </html>
+        `);
+        
+        printWindow.document.close();
+    }
+    
     document.addEventListener('DOMContentLoaded', function() {
         console.log('🚀 Driver schedule auto-update starting...');
         
