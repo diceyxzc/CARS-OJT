@@ -361,7 +361,7 @@
 .report-tabs {
     display: flex;
     gap: 5px;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
     flex-wrap: wrap;
     border-bottom: 2px solid #e9ecef;
     padding-bottom: 10px;

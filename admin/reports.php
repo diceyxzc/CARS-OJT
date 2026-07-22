@@ -43,6 +43,19 @@ $actual_time_colors = [
     'none'   => '#6c757d',
 ];
 
+// Allowed export statuses (whitelist to prevent injection via query string)
+$exportable_statuses = ['approved', 'completed', 'in_progress', 'cancelled'];
+
+// Statuses selected for export - defaults to all four if none/invalid supplied
+$selected_statuses = $_GET['status'] ?? $exportable_statuses;
+if (!is_array($selected_statuses)) {
+    $selected_statuses = [$selected_statuses];
+}
+$selected_statuses = array_values(array_intersect($selected_statuses, $exportable_statuses));
+if (empty($selected_statuses)) {
+    $selected_statuses = $exportable_statuses;
+}
+
 // MySQL FIELD() clause to sort a status column by the priority order above
 function statusOrderSql($col = 'a.status') {
     return "FIELD($col, 'in_progress','approved','completed','pending','cancelled')";
@@ -207,19 +220,20 @@ if (isset($_GET['export'])) {
 
     if ($report_type == 'trips') {
         $filename = 'trip_summary_' . $start_date . '_to_' . $end_date;
+        $placeholders = implode(',', array_fill(0, count($selected_statuses), '?'));
         $stmt = $pdo->prepare("
             SELECT a.*, a.request_number, c.brand, c.plate_number, c.parking, 
-                   d.name as driver_name, d.mobile as driver_mobile, 
-                   COALESCE(u.full_name, u.username) as requestor
+                d.name as driver_name, d.mobile as driver_mobile, 
+                COALESCE(u.full_name, u.username) as requestor
             FROM tbl_allocations a 
             JOIN tbl_cars c ON a.car_id = c.car_id 
             JOIN tbl_drivers d ON a.driver_id = d.driver_id 
             JOIN tbl_users u ON a.requestor_id = u.user_id 
-            WHERE a.status IN ('approved', 'completed', 'in_progress', 'cancelled')
-              AND a.date BETWEEN ? AND ?
+            WHERE a.status IN ($placeholders)
+            AND a.date BETWEEN ? AND ?
             ORDER BY " . statusOrderSql('a.status') . ", a.date DESC
         ");
-        $stmt->execute([$start_date, $end_date]);
+        $stmt->execute(array_merge($selected_statuses, [$start_date, $end_date]));
         $export_data = $stmt->fetchAll();
     } elseif ($report_type == 'drivers') {
         $filename = 'driver_performance_' . $start_date . '_to_' . $end_date;
@@ -330,19 +344,20 @@ if (isset($_GET['export_pdf'])) {
     $export_total_cancelled_all = 0;
 
     if ($report_type == 'trips') {
+        $placeholders = implode(',', array_fill(0, count($selected_statuses), '?'));
         $stmt = $pdo->prepare("
             SELECT a.*, a.request_number, c.brand, c.plate_number, c.parking, 
-                   d.name as driver_name, d.mobile as driver_mobile, 
-                   COALESCE(u.full_name, u.username) as requestor
+                d.name as driver_name, d.mobile as driver_mobile, 
+                COALESCE(u.full_name, u.username) as requestor
             FROM tbl_allocations a 
             JOIN tbl_cars c ON a.car_id = c.car_id 
             JOIN tbl_drivers d ON a.driver_id = d.driver_id 
             JOIN tbl_users u ON a.requestor_id = u.user_id 
-            WHERE a.status IN ('approved', 'completed', 'in_progress', 'cancelled')
-              AND a.date BETWEEN ? AND ?
-            ORDER BY " . statusOrderSql('a.status') . ", a.date DESC
+            WHERE a.status IN ($placeholders)
+            AND a.date BETWEEN ? AND ?
+            ORDER BY " . statusOrderSql('a.status') . ", a.date ASC
         ");
-        $stmt->execute([$start_date, $end_date]);
+        $stmt->execute(array_merge($selected_statuses, [$start_date, $end_date]));
         $export_data = $stmt->fetchAll();
         $export_total_trips = count($export_data);
         foreach ($export_data as $r) {
@@ -530,8 +545,8 @@ $export_pdf_query = http_build_query($export_pdf_params);
 <html>
 <head>
     <title>Reports - CARS</title>
-    <link rel="stylesheet" href="/assets/css/style.css">
-    <link rel="stylesheet" href="/admin/assets/css/admin.css">
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../admin/assets/css/admin.css">
     <link href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" rel="stylesheet">
 </head>
 <body>
@@ -584,19 +599,41 @@ $export_pdf_query = http_build_query($export_pdf_params);
             <form method="GET" style="display:flex; gap:15px; align-items:end; flex-wrap:wrap;">
                 <input type="hidden" name="type" value="<?= htmlspecialchars($report_type) ?>">
                 <div class="form-group" style="margin-bottom:0;">
-                    <label style="font-size:0.8rem; color:#6c757d; font-weight:500;">Export range: From</label>
-                    <input type="date" name="start" value="<?= htmlspecialchars($start_date) ?>" class="form-control" style="padding:8px 12px; width:auto; border:2px solid #e9ecef; border-radius:6px;">
+                    <label style="font-size:0.8rem; color:#6c757d; font-weight:500;">From:</label>
+                    <input type="date" name="start" id="exportStartDate" value="<?= htmlspecialchars($start_date) ?>" class="form-control" style="padding:8px 12px; width:auto; border:2px solid #e9ecef; border-radius:6px;">
                 </div>
                 <div class="form-group" style="margin-bottom:0;">
-                    <label style="font-size:0.8rem; color:#6c757d; font-weight:500;">To</label>
-                    <input type="date" name="end" value="<?= htmlspecialchars($end_date) ?>" class="form-control" style="padding:8px 12px; width:auto; border:2px solid #e9ecef; border-radius:6px;">
+                    <label style="font-size:0.8rem; color:#6c757d; font-weight:500;">To:</label>
+                    <input type="date" name="end" id="exportEndDate" value="<?= htmlspecialchars($end_date) ?>" class="form-control" style="padding:8px 12px; width:auto; border:2px solid #e9ecef; border-radius:6px;">
                 </div>
-                <button type="submit" class="btn btn-primary">Set Export Range</button>
-                <a href="?<?= htmlspecialchars($export_query) ?>" class="btn btn-success">Export CSV</a>
-                <a href="?<?= htmlspecialchars($export_pdf_query) ?>" class="btn btn-danger">Export PDF</a>
+                <?php if ($report_type == 'trips'): ?>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label style="font-size:0.8rem; color:#6c757d; font-weight:500; display:block; margin-bottom:3px;">Include statuses:</label>
+                    <div id="statusFilterGroup" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; padding:8px 10px; border:2px solid #e9ecef; border-radius:6px;">
+                        <?php foreach ($exportable_statuses as $s): ?>
+                            <label style="font-size:0.8rem; display:flex; align-items:center; gap:4px; cursor:pointer;">
+                                <input type="checkbox" class="export-status-checkbox" value="<?= $s ?>" <?= in_array($s, $selected_statuses) ? 'checked' : '' ?>>
+                                <?= htmlspecialchars($status_labels[$s]) ?>
+                            </label>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+                <?php endif; ?>
+                <a href="?<?= htmlspecialchars($export_query) ?>" id="exportCsvBtn" class="btn btn-success">Export CSV</a>
+                <a href="?<?= htmlspecialchars($export_pdf_query) ?>" id="exportPdfBtn" class="btn btn-danger">Export PDF</a>
             </form>
-        </div>
 
+            <?php if ($report_type == 'trips' && count($selected_statuses) < count($exportable_statuses)): ?>
+                <div style="font-size:0.75rem; color:#6c757d; margin-top:6px;">
+                    Filtered to: <?= implode(', ', array_map(function($s) use ($status_labels) { return $status_labels[$s]; }, $selected_statuses)) ?>
+                </div>
+            <?php endif; ?>
+
+            <div id="dateRangeWarning" style="display:none; color:#c62828; font-size:0.8rem; font-weight:500; width:100%; margin-top:6px;">
+                ⚠ "To" date cannot be earlier than "From" date.
+            </div>
+        </div>
+        
         <?php if ($report_type == 'trips'): ?>
             <!-- Summary Stats -->
             <div class="stat-grid">
@@ -680,7 +717,9 @@ $export_pdf_query = http_build_query($export_pdf_params);
                                 ?>
                                 <tr data-date="<?= $raw_date ?>" class="trip-row-clickable" style="border-left: 3px solid <?= $sc['border'] ?>; cursor:pointer;" onclick="openTripModal(<?= htmlspecialchars(json_encode($t)) ?>)">
                                     <td style="padding:6px 10px; border-bottom:1px solid #f1f3f5;"><strong><?= htmlspecialchars($t['request_number'] ?? '') ?></strong></td>
-                                    <td data-order="<?= $status_priority[$t['status']] ?? 99 ?>" style="padding:6px 10px; border-bottom:1px solid #f1f3f5;">
+                                    <td data-order="<?= $status_priority[$t['status']] ?? 99 ?>"
+                                        data-search="<?= htmlspecialchars($t['status'] . ' ' . ($status_labels[$t['status']] ?? ucfirst($t['status']))) ?>"
+                                        style="padding:6px 10px; border-bottom:1px solid #f1f3f5;">
                                         <span style="display:inline-block; padding:3px 10px; border-radius:12px; font-size:0.72rem; font-weight:600; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap; background:<?= $sc['bg'] ?>; color:<?= $sc['text'] ?>;">
                                             <?= $status_labels[$t['status']] ?? ucfirst($t['status']) ?>
                                         </span>
@@ -886,11 +925,49 @@ $export_pdf_query = http_build_query($export_pdf_params);
     <!-- jQuery and DataTables JS -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-    <script src="/assets/js/script.js"></script>
-    <script src="/admin/assets/js/admin.js"></script>
+    <script src="../assets/js/script.js"></script>
+    <script src="../admin/assets/js/admin.js"></script>
+    
     <script>
     $(document).ready(function() {
         var outgoingTripsTable = null;
+        $('#tripDateFilter').removeAttr('min').removeAttr('max');
+        
+        function updateExportLinks() {
+            var start = $('#exportStartDate').val();
+            var end = $('#exportEndDate').val();
+
+            if (start && end && end < start) {
+                $('#dateRangeWarning').show();
+                $('#exportCsvBtn, #exportPdfBtn').css('pointer-events', 'none').css('opacity', '0.5');
+                return;
+            }
+
+            $('#dateRangeWarning').hide();
+            $('#exportCsvBtn, #exportPdfBtn').css('pointer-events', 'auto').css('opacity', '1');
+
+            var params = 'type=<?= $report_type ?>&start=' + encodeURIComponent(start) + '&end=' + encodeURIComponent(end);
+
+            var statusCheckboxes = $('.export-status-checkbox');
+            if (statusCheckboxes.length > 0) {
+                var checked = statusCheckboxes.filter(':checked').map(function() { return this.value; }).get();
+                if (checked.length === 0) {
+                    // Nothing checked - block export rather than silently exporting "all"
+                    $('#exportCsvBtn, #exportPdfBtn').css('pointer-events', 'none').css('opacity', '0.5');
+                    $('#dateRangeWarning').text('⚠ Select at least one status to export.').show();
+                    return;
+                }
+                checked.forEach(function(s) {
+                    params += '&status[]=' + encodeURIComponent(s);
+                });
+            }
+
+            $('#exportCsvBtn').attr('href', '?' + params + '&export=1');
+            $('#exportPdfBtn').attr('href', '?' + params + '&export_pdf=1');
+        }
+
+        $('#exportStartDate, #exportEndDate').on('change', updateExportLinks);
+        $(document).on('change', '.export-status-checkbox', updateExportLinks);
 
         // Initialize Outgoing Trips Table (Trip Details section)
         if ($('#outgoingTripsTable').length > 0) {
@@ -977,6 +1054,8 @@ $export_pdf_query = http_build_query($export_pdf_params);
                 classes: { sWrapper: 'dataTables_wrapper dt-custom-reports' }
             });
         }
+
+        updateExportLinks();
     });
     
     // Show Today button functionality

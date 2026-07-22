@@ -244,8 +244,8 @@ $all_cars_dropdown = $pdo->query("
 <html>
 <head>
     <title>Drivers - CARS</title>
-    <link rel="stylesheet" href="/assets/css/style.css">
-    <link rel="stylesheet" href="/admin/assets/css/admin.css">
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../admin/assets/css/admin.css">
     <link href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" rel="stylesheet">
 </head>
 <body>
@@ -469,20 +469,6 @@ $all_cars_dropdown = $pdo->query("
             </div>
         </div>
 
-        <!-- Deactivate Driver Modal -->
-        <div class="modal-overlay" id="deactivateModal">
-            <div class="modal-box">
-                <h3>Deactivate Driver</h3>
-                <p>Are you sure you want to deactivate this driver?</p>
-                <p style="font-size:0.85rem; color:#6c757d; margin-bottom:4px;" id="deactivateDriverInfo"></p>
-                <div class="modal-warning">This driver will no longer be able to accept trips.</div>
-                <div class="modal-buttons">
-                    <button type="button" class="btn btn-cancel-modal" onclick="closeDeactivateModal()">Cancel</button>
-                    <a href="#" class="btn btn-warning-modal" id="confirmDeactivateBtn">Deactivate Driver</a>
-                </div>
-            </div>
-        </div>
-
         <!-- Unassign Car Modal -->
         <div class="modal-overlay" id="unassignModal">
             <div class="modal-box">
@@ -582,12 +568,6 @@ $all_cars_dropdown = $pdo->query("
                                     <td style="padding:6px 10px; border-bottom:1px solid #f1f3f5;">
                                         <div class="action-buttons" style="display:flex; gap:6px; flex-wrap:wrap;">
                                             <button class="btn btn-sm btn-primary" onclick="openEditDriverModal(<?= htmlspecialchars(json_encode($d)) ?>)" style="font-size:0.75rem; padding:6px 14px;">Edit</button>
-                                            <?php if ($d['status'] == 'active'): ?>
-                                                <button class="btn btn-sm btn-warning" onclick="openDeactivateModal(<?= $d['driver_id'] ?>, '<?= htmlspecialchars($d['name']) ?>')" style="font-size:0.75rem; padding:6px 14px;">Deactivate</button>
-                                            <?php else: ?>
-                                                <a href="?toggle=<?= $d['driver_id'] ?>&tab=drivers" class="btn btn-sm btn-success" style="font-size:0.75rem; padding:6px 14px;">Activate</a>
-                                            <?php endif; ?>
-                                            <!-- DELETE BUTTON REMOVED FROM DRIVERS TAB -->
                                         </div>
                                     </td>
                                 </tr>
@@ -721,8 +701,8 @@ $all_cars_dropdown = $pdo->query("
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-    <script src="/assets/js/script.js"></script>
-    <script src="/admin/assets/js/admin.js"></script>
+    <script src="../assets/js/script.js"></script>
+    <script src="../admin/assets/js/admin.js"></script>
     <script>
     $(document).ready(function() {
         $('#driversTable').DataTable({
@@ -831,18 +811,6 @@ $all_cars_dropdown = $pdo->query("
         document.body.style.overflow = '';
     }
 
-    // Deactivate Driver Modal
-    function openDeactivateModal(driverId, driverName) {
-        document.getElementById('deactivateDriverInfo').textContent = driverName + ' (ID: #' + driverId + ')';
-        document.getElementById('confirmDeactivateBtn').href = '?toggle=' + driverId + '&tab=drivers';
-        document.getElementById('deactivateModal').classList.add('active');
-        document.body.style.overflow = 'hidden';
-    }
-    function closeDeactivateModal() {
-        document.getElementById('deactivateModal').classList.remove('active');
-        document.body.style.overflow = '';
-    }
-
     // Unassign Car Modal
     function openUnassignModal(carId, driverId, brand, plate) {
         document.getElementById('unassignCarInfo').textContent = brand + ' (' + plate + ')';
@@ -924,14 +892,13 @@ $all_cars_dropdown = $pdo->query("
 
     // Close modals
     document.addEventListener('click', function(e) {
-        ['addDriverModal', 'editDriverModal', 'addCarModal', 'editCarModal', 'assignModal', 'deactivateModal', 'unassignModal'].forEach(id => {
+        ['addDriverModal', 'editDriverModal', 'addCarModal', 'editCarModal', 'assignModal', 'unassignModal'].forEach(id => {
             if (e.target === document.getElementById(id)) {
                 if (id === 'addDriverModal') closeAddDriverModal();
                 else if (id === 'editDriverModal') closeEditDriverModal();
                 else if (id === 'addCarModal') closeAddCarModal();
                 else if (id === 'editCarModal') closeEditCarModal();
                 else if (id === 'assignModal') closeAssignModal();
-                else if (id === 'deactivateModal') closeDeactivateModal();
                 else if (id === 'unassignModal') closeUnassignModal();
             }
         });
@@ -944,7 +911,6 @@ $all_cars_dropdown = $pdo->query("
             closeAddCarModal();
             closeEditCarModal();
             closeAssignModal();
-            closeDeactivateModal();
             closeUnassignModal();
         }
     });

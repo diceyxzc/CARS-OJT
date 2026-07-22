@@ -234,8 +234,8 @@ $status_priority = ['in_progress' => 0, 'approved' => 1, 'completed' => 2];
 <html>
 <head>
     <title>Admin Dashboard - CARS</title>
-    <link rel="stylesheet" href="/assets/css/style.css">
-    <link rel="stylesheet" href="/admin/assets/css/admin.css">
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../admin/assets/css/admin.css">
     <link href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" rel="stylesheet">
 </head>
 <body>
@@ -546,9 +546,9 @@ $status_priority = ['in_progress' => 0, 'approved' => 1, 'completed' => 2];
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
     
-    <script src="/assets/js/script.js"></script>
-    <script src="/admin/assets/js/admin.js"></script>
-    <script src="/assets/js/global-notif.js"></script>
+    <script src="../assets/js/script.js"></script>
+    <script src="../admin/assets/js/admin.js"></script>
+    <script src="../assets/js/global-notif.js"></script>
 
     <script>
     $(document).ready(function() {

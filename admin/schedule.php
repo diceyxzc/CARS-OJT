@@ -325,8 +325,8 @@ if ($view_type == 'monthly') {
 <html>
 <head>
     <title>Schedule - CARS</title>
-    <link rel="stylesheet" href="/assets/css/style.css">
-    <link rel="stylesheet" href="/admin/assets/css/admin.css">
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../admin/assets/css/admin.css">
     <style>
         /* Custom styles for navigation buttons */
         .week-nav .btn-outline {
@@ -959,8 +959,8 @@ if ($view_type == 'monthly') {
             </div>
         <?php endif; ?>
     </div>
-    <script src="/assets/js/script.js"></script>
-    <script src="/admin/assets/js/admin.js"></script>
+    <script src="../assets/js/script.js"></script>
+    <script src="../admin/assets/js/admin.js"></script>
     <script>
     // ---- Driver schedule modal ----
     function formatTripTime(t) {
