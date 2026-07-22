@@ -83,21 +83,56 @@ function groupTripsByDriver($trips) {
 }
 
 // Renders the driver-card list (used for both Approved and Outgoing tabs, and the AJAX refresh below)
-function renderDriverCardsHtml($drivers, $modalFn) {
+// $mode controls what shows in the mini trip preview under each driver's name:
+//   'approved' -> shows up to 3 trips (all trips here are 'approved' status anyway)
+//   'outgoing' -> shows only 'in_progress' trips, up to 3
+function renderDriverCardsHtml($drivers, $modalFn, $mode = 'approved') {
     ob_start();
     if (count($drivers) > 0):
-        foreach ($drivers as $driver): ?>
+        foreach ($drivers as $driver):
+            $all_trips = $driver['trips'];
+
+            if ($mode === 'outgoing') {
+                $mini_trips = array_values(array_filter($all_trips, function ($t) {
+                    return $t['status'] === 'in_progress';
+                }));
+            } else {
+                $mini_trips = $all_trips;
+            }
+
+            $recent_trips = array_slice($mini_trips, 0, 3);
+            $remaining_count = count($mini_trips) - count($recent_trips);
+        ?>
             <div class="admin-driver-card" onclick="<?= $modalFn ?>(<?= htmlspecialchars(json_encode($driver)) ?>)">
-                <div class="driver-status-dot active"></div>
-                <div class="driver-info">
-                    <span class="driver-name">
-                        <?= htmlspecialchars($driver['driver_name']) ?>
-                        <span class="driver-car-tag"><?= htmlspecialchars($driver['car_brand']) ?> (<?= htmlspecialchars($driver['car_plate']) ?>)</span>
-                        <span class="trip-count-pill"><?= count($driver['trips']) ?></span>
-                    </span>
-                    <span class="driver-mobile"><?= htmlspecialchars($driver['driver_mobile']) ?></span>
+                <div class="driver-card-main">
+                    <div class="driver-status-dot active"></div>
+                    <div class="driver-info">
+                        <span class="driver-name">
+                            <?= htmlspecialchars($driver['driver_name']) ?>
+                            <span class="driver-car-tag"><?= htmlspecialchars($driver['car_brand']) ?> (<?= htmlspecialchars($driver['car_plate']) ?>)</span>
+                            <span class="trip-count-pill"><?= count($all_trips) ?></span>
+                        </span>
+                        <span class="driver-mobile"><?= htmlspecialchars($driver['driver_mobile']) ?></span>
+                    </div>
+                    <span class="badge-active">Active</span>
                 </div>
-                <span class="badge-active">Active</span>
+                <?php if (count($recent_trips) > 0): ?>
+                    <div class="driver-mini-trips">
+                        <?php foreach ($recent_trips as $trip): ?>
+                            <div class="driver-mini-trip-row" onclick="event.stopPropagation(); openTripModal(<?= htmlspecialchars(json_encode($trip)) ?>)">
+                                <span class="mini-trip-time"><?= date('g:i A', strtotime($trip['pickup_time'])) ?></span>
+                                <span class="mini-trip-loc"><?= htmlspecialchars($trip['pickup_location']) ?><?= !empty($trip['dropoff_location']) ? ' → ' . htmlspecialchars($trip['dropoff_location']) : '' ?></span>
+                            </div>
+                        <?php endforeach; ?>
+                        <?php if ($remaining_count > 0): ?>
+                            <div class="driver-mini-trip-more">+<?= $remaining_count ?> more</div>
+                        <?php endif; ?>
+                    </div>
+                <?php elseif ($mode === 'outgoing'): ?>
+                    <div class="driver-mini-trips">
+                        <div class="driver-mini-trip-empty">No trips currently in progress</div>
+                    </div>
+                <?php endif; ?>
             </div>
         <?php endforeach;
     else: ?>
@@ -610,7 +645,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 1 && isset($_GET['tab']) && $_GET['
         exit();
     }
 
-    echo renderDriverCardsHtml($ajax_outgoing_drivers, 'openOutgoingDriverModal');
+    echo renderDriverCardsHtml($ajax_outgoing_drivers, 'openOutgoingDriverModal', 'outgoing');
     exit();
 }
 
@@ -1200,7 +1235,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 1 && isset($_GET['tab']) && $_GET['
         exit();
     }
 
-    echo renderDriverCardsHtml($ajax_drivers, 'openApprovedDriverModal');
+    echo renderDriverCardsHtml($ajax_drivers, 'openApprovedDriverModal', 'approved');
     exit();
 }
 
@@ -1672,7 +1707,7 @@ function getAvailableDrivers($pdo, $date, $pickup_time, $dropoff_time = null) {
                     <strong>Car:</strong> <span id="completeInprogressCar">-</span><br>
                     <strong>Driver:</strong> <span id="completeInprogressDriver">-</span><br>
                     <strong>Date:</strong> <span id="completeInprogressDate">-</span><br>
-                    <strong>Pickup Time:</strong> <span id="completeInprogressPickup">-</span>
+                    <strong>Actual Pickup Time:</strong> <span id="completeInprogressPickup">-</span>
                 </div>
                 <div class="form-group floating-group" style="margin-top:12px;">
                     <input type="time" class="form-control-modern" placeholder=" " id="completeInprogressActualTime" required>
@@ -2344,7 +2379,7 @@ function getAvailableDrivers($pdo, $date, $pickup_time, $dropoff_time = null) {
                     </form>
                 </div>
                 <div class="admin-driver-list" id="approvedDriverList">
-                    <?= renderDriverCardsHtml($approved_drivers, 'openApprovedDriverModal') ?>
+                    <?= renderDriverCardsHtml($approved_drivers, 'openApprovedDriverModal', 'approved') ?>
                 </div>
             </div>
         </div>
@@ -2366,7 +2401,7 @@ function getAvailableDrivers($pdo, $date, $pickup_time, $dropoff_time = null) {
                     </form>
                 </div>
                 <div class="admin-driver-list" id="outgoingDriverList">
-                    <?= renderDriverCardsHtml($outgoing_drivers, 'openOutgoingDriverModal') ?>
+                    <?= renderDriverCardsHtml($outgoing_drivers, 'openOutgoingDriverModal', 'outgoing') ?>
                 </div>
             </div>
         </div>

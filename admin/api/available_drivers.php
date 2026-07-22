@@ -2,6 +2,7 @@
 session_start();
 require_once '../../includes/load.php';
 require_admin();
+header('Cache-Control: no-store, no-cache, must-revalidate');
 
 /* Use to get Date, PickupTime, and Dropoff time of the system 
    While also using Pickuptime insted of system time to determine dropoff_time

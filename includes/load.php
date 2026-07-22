@@ -35,8 +35,6 @@ function updateTripStatuses($pdo) {
     ];
 
     try {
-        // Get all cars that have an ACTUAL active trip (in_progress only —
-        // 'approved' just means scheduled, the car isn't physically out yet)
         $cars = $pdo->query("
             SELECT DISTINCT car_id 
             FROM tbl_allocations 
@@ -44,24 +42,21 @@ function updateTripStatuses($pdo) {
             AND date = CURDATE()
         ")->fetchAll();
 
-        // Set those cars to 'in_use'
         foreach ($cars as $car) {
             $update = $pdo->prepare("
                 UPDATE tbl_cars 
                 SET status = 'in_use', status_updated_at = NOW() 
-                WHERE car_id = ?
+                WHERE car_id = ? AND status != 'in_use'
             ");
             $update->execute([$car['car_id']]);
             $status_update['cars_updated'] += $update->rowCount();
         }
 
-        // Set cars with no in_progress trip back to 'available' (unless under maintenance)
         $cars_with_no_active = $pdo->query("
             SELECT c.car_id 
             FROM tbl_cars c
             LEFT JOIN tbl_allocations a ON c.car_id = a.car_id 
-                AND a.status = 'in_progress' 
-                AND a.date = CURDATE()
+                AND a.status = 'in_progress'
             WHERE a.allocation_id IS NULL
             AND c.status = 'in_use'
         ")->fetchAll();
@@ -70,7 +65,7 @@ function updateTripStatuses($pdo) {
             $update = $pdo->prepare("
                 UPDATE tbl_cars 
                 SET status = 'available', status_updated_at = NOW() 
-                WHERE car_id = ?
+                WHERE car_id = ? AND status != 'available'
             ");
             $update->execute([$car['car_id']]);
             $status_update['cars_set_available'] += $update->rowCount();
@@ -83,7 +78,10 @@ function updateTripStatuses($pdo) {
     return $status_update;
 }
 
-$status_update = updateTripStatuses($pdo);
+// Only recompute if this request actually cares about the result
+if (!defined('SKIP_TRIP_STATUS_SYNC')) {
+    $status_update = updateTripStatuses($pdo);
+}
 
 /**
  * Recomputes and persists a car's status from actual usage:

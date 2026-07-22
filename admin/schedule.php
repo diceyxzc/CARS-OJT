@@ -26,8 +26,6 @@ $month_start = date('Y-m-01', strtotime($month_year));
 $month_end = date('Y-m-t', strtotime($month_year));
 $month_days = [];
 
-// ---- Helpers for the new driver-based grouping ----
-
 // Priority order for sorting trips within a day in the driver modal:
 // in_progress first, then approved, then completed, anything else (e.g. pending) last.
 function tripStatusPriority($status) {
@@ -417,8 +415,8 @@ if ($view_type == 'monthly') {
         }
         .admin-driver-card {
             display: flex;
-            align-items: center;
-            gap: 12px;
+            flex-direction: column;
+            gap: 6px;
             padding: 10px 14px;
             border: 1px solid #e0e0e0;
             border-radius: 6px;
@@ -429,6 +427,11 @@ if ($view_type == 'monthly') {
         .admin-driver-card:hover {
             background: #f5f7ff;
             border-color: #c5cae9;
+        }
+        .driver-card-main {
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
         .driver-status-dot {
             width: 10px;
@@ -692,6 +695,69 @@ if ($view_type == 'monthly') {
             background: #e3f2fd;
             color: #0d47a1;
         }
+
+        .admin-driver-mini {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 4px;
+            padding: 5px 8px;
+            margin-bottom: 4px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            background: #fff;
+            transition: all 0.15s ease;
+        }
+        .admin-driver-mini:hover {
+            background: #f5f7ff;
+            border-color: #c5cae9;
+        }
+        .driver-mini-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .driver-mini-trips {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            padding-left: 5px;
+            border-left: 2px solid #e8eaf6;
+            margin-left: 4px;
+        }
+        .driver-mini-trip-row {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.65rem;
+            padding: 1px 4px;
+            border-radius: 3px;
+            cursor: pointer;
+            overflow: hidden;
+        }
+        .driver-mini-trip-row:hover {
+            background: #eef1ff;
+        }
+        .mini-trip-time {
+            font-weight: 600;
+            color: #1a237e;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+        .mini-trip-loc {
+            color: #6c757d;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .driver-mini-trip-more {
+            font-size: 0.63rem;
+            color: #9e9e9e;
+            font-style: italic;
+            padding-left: 4px;
+        }
     </style>
 </head>
 <body>
@@ -793,14 +859,35 @@ if ($view_type == 'monthly') {
                 <?php if (count($today_drivers) > 0): ?>
                     <div class="admin-driver-list">
                         <?php foreach ($today_drivers as $driver): ?>
-                            <?php $payload = buildDriverDayPayload($driver['driver_id'], $driver['driver_name'], $driver['driver_mobile'], $filter_date, $schedule); $payload['label'] = $schedule_modal_label; ?>
+                            <?php
+                            $payload = buildDriverDayPayload($driver['driver_id'], $driver['driver_name'], $driver['driver_mobile'], $filter_date, $schedule);
+                            $payload['label'] = $schedule_modal_label;
+                            $day_trips = $payload['days'][0]['trips'] ?? [];
+                            $recent_trips = array_slice($day_trips, 0, 5);
+                            $remaining_count = count($day_trips) - count($recent_trips);
+                            ?>
                             <div class="admin-driver-card" onclick="openDriverModal(<?= htmlspecialchars(json_encode($payload)) ?>)">
-                                <div class="driver-status-dot active"></div>
-                                <div class="driver-info">
-                                    <span class="driver-name"><?= htmlspecialchars($driver['driver_name']) ?><span class="driver-car-tag"><?= htmlspecialchars($driver['car_brand']) ?> (<?= htmlspecialchars($driver['car_plate']) ?>)</span><span class="trip-count-pill"><?= $driver['trip_count'] ?></span></span>
-                                    <span class="driver-mobile"><?= htmlspecialchars($driver['driver_mobile']) ?></span>
+                                <div class="driver-card-main">
+                                    <div class="driver-status-dot active"></div>
+                                    <div class="driver-info">
+                                        <span class="driver-name"><?= htmlspecialchars($driver['driver_name']) ?><span class="driver-car-tag"><?= htmlspecialchars($driver['car_brand']) ?> (<?= htmlspecialchars($driver['car_plate']) ?>)</span><span class="trip-count-pill"><?= $driver['trip_count'] ?></span></span>
+                                        <span class="driver-mobile"><?= htmlspecialchars($driver['driver_mobile']) ?></span>
+                                    </div>
+                                    <span class="badge-active">Active</span>
                                 </div>
-                                <span class="badge-active">Active</span>
+                                <?php if (count($recent_trips) > 0): ?>
+                                    <div class="driver-mini-trips" style="margin-left:22px;">
+                                        <?php foreach ($recent_trips as $trip): ?>
+                                            <div class="driver-mini-trip-row" onclick="event.stopPropagation(); openTripModal(<?= htmlspecialchars(json_encode($trip)) ?>)">
+                                                <span class="mini-trip-time"><?= date('g:i A', strtotime($trip['pickup_time'])) ?></span>
+                                                <span class="mini-trip-loc"><?= htmlspecialchars($trip['pickup_location']) ?><?= !empty($trip['dropoff_location']) ? ' → ' . htmlspecialchars($trip['dropoff_location']) : '' ?></span>
+                                            </div>
+                                        <?php endforeach; ?>
+                                        <?php if ($remaining_count > 0): ?>
+                                            <div class="driver-mini-trip-more">+<?= $remaining_count ?> more</div>
+                                        <?php endif; ?>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                         <?php endforeach; ?>
                     </div>
@@ -861,10 +948,31 @@ if ($view_type == 'monthly') {
                                 </div>
                                 <?php if ($driver_count > 0): ?>
                                     <?php foreach ($drivers_today as $driver): ?>
-                                        <?php $payload = buildDriverDayPayload($driver['driver_id'], $driver['driver_name'], $driver['driver_mobile'], $date, $schedule); $payload['label'] = $schedule_modal_label; ?>
+                                        <?php
+                                        $payload = buildDriverDayPayload($driver['driver_id'], $driver['driver_name'], $driver['driver_mobile'], $date, $schedule);
+                                        $payload['label'] = $schedule_modal_label;
+                                        $day_trips = $payload['days'][0]['trips'] ?? [];
+                                        $recent_trips = array_slice($day_trips, 0, 3);
+                                        $remaining_count = count($day_trips) - count($recent_trips);
+                                        ?>
                                         <div class="admin-driver-mini" onclick="openDriverModal(<?= htmlspecialchars(json_encode($payload)) ?>)">
-                                            <span class="driver-status-dot active"></span>
-                                            <span class="driver-mini-name"><?= htmlspecialchars($driver['driver_name']) ?><span class="trip-count-pill"><?= $driver['trip_count'] ?></span></span>
+                                            <div class="driver-mini-header">
+                                                <span class="driver-status-dot active"></span>
+                                                <span class="driver-mini-name"><?= htmlspecialchars($driver['driver_name']) ?><span class="trip-count-pill"><?= $driver['trip_count'] ?></span></span>
+                                            </div>
+                                            <?php if (count($recent_trips) > 0): ?>
+                                                <div class="driver-mini-trips">
+                                                    <?php foreach ($recent_trips as $trip): ?>
+                                                        <div class="driver-mini-trip-row" onclick="event.stopPropagation(); openTripModal(<?= htmlspecialchars(json_encode($trip)) ?>)">
+                                                            <span class="mini-trip-time"><?= date('g:i A', strtotime($trip['pickup_time'])) ?></span>
+                                                            <span class="mini-trip-loc"><?= htmlspecialchars($trip['pickup_location']) ?><?= !empty($trip['dropoff_location']) ? ' → ' . htmlspecialchars($trip['dropoff_location']) : '' ?></span>
+                                                        </div>
+                                                    <?php endforeach; ?>
+                                                    <?php if ($remaining_count > 0): ?>
+                                                        <div class="driver-mini-trip-more">+<?= $remaining_count ?> more</div>
+                                                    <?php endif; ?>
+                                                </div>
+                                            <?php endif; ?>
                                         </div>
                                     <?php endforeach; ?>
                                 <?php else: ?>

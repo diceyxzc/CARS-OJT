@@ -34,7 +34,7 @@ try {
                 AND status NOT IN ('cancelled', 'pending', 'declined')) as weekly_trips,
 
             (SELECT COUNT(*) FROM tbl_allocations 
-                WHERE status NOT IN ('cancelled', 'pending', 'declined', 'approved')) as total_trips_month,
+                WHERE status = 'completed') as total_trips_month,
 
             (SELECT COUNT(*) FROM tbl_cars WHERE status = 'available') as available_cars,
             (SELECT COUNT(*) FROM tbl_cars) as total_cars,

@@ -1991,7 +1991,13 @@ function openOutgoingDriverModal(data) {
             completeBtn.className = 'btn btn-success';
             completeBtn.innerHTML = '<i class="fas fa-check"></i> Complete';
             completeBtn.addEventListener('click', function () {
-                openCompleteInprogressModal(t.allocation_id, t.brand, t.driver_name, formatDateDisplay(t.date), formatTimeDisplay(t.pickup_time));
+                openCompleteInprogressModal(
+                    t.allocation_id,
+                    t.brand,
+                    t.driver_name,
+                    formatDateDisplay(t.date),
+                    t.actual_pickup_time ? formatTimeDisplay(t.actual_pickup_time) : formatTimeDisplay(t.pickup_time) + ' (scheduled)'
+                );
             });
 
             var cancelBtn = document.createElement('button');

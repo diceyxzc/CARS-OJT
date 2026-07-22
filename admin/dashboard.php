@@ -36,7 +36,7 @@ $month_end = date('Y-m-d');
 // Get total trips - ALL trips regardless of date, EXCLUDING cancelled, pending, and declined
 $total_trips_month = $pdo->query("
     SELECT COUNT(*) FROM tbl_allocations 
-    WHERE status NOT IN ('cancelled', 'pending', 'declined', 'approved')
+    WHERE status = 'completed'
 ");
 $total_trips_month_count = $total_trips_month->fetchColumn();
 
