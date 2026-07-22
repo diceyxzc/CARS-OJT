@@ -9,7 +9,7 @@ if (!isset($_SERVER['HTTP_X_REQUESTED_WITH']) || $_SERVER['HTTP_X_REQUESTED_WITH
     exit();
 }
 
-// If called via AJAX, return JSON
+// If called via AJAX, return JSON. Process any completed trips and free up the cars so they can be booked again.
 $result = updateTripStatuses($pdo);
 echo json_encode([
     'success' => true,

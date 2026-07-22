@@ -31,6 +31,7 @@ $pending_requests = $pdo->query("
     LIMIT 5
 ")->fetchAll();
 
+// Show the admin all the requests waiting for their approval, and how many there are.
 echo json_encode([
     'success' => true,
     'data' => [
