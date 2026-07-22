@@ -536,7 +536,7 @@ if ($view_type == 'monthly') {
             flex-shrink: 0;
         }
 
-/* ---- Driver mini badges (Monthly view day cells) ---- */
+        /* ---- Driver mini badges (Monthly view day cells) ---- */
         .month-driver-mini {
             display: flex;
             align-items: center;
@@ -748,9 +748,9 @@ if ($view_type == 'monthly') {
         }
         .mini-trip-loc {
             color: #6c757d;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            overflow: visible;
+            white-space: normal;
+            word-break: break-word;
         }
         .driver-mini-trip-more {
             font-size: 0.63rem;

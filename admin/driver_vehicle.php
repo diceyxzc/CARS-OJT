@@ -725,7 +725,7 @@ $all_cars_dropdown = $pdo->query("
         $('#carsTable').DataTable({
             pageLength: 10,
             lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-            order: [[4, 'desc']],
+            order: [[3, 'asc'], [4, 'desc']], 
             columnDefs: [
                 { orderable: false, targets: [7] },
                 { targets: [4], orderable: true }

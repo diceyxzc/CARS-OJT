@@ -556,9 +556,6 @@ $status_priority = ['in_progress' => 0, 'approved' => 1, 'completed' => 2];
             $('#todayScheduleTable').DataTable({
                 pageLength: 5,
                 lengthMenu: [[5, 10, 25, -1], [5, 10, 25, "All"]],
-                // Status column (6) carries a data-order priority (in_progress -> approved
-                // -> completed) so this matches the SQL's intended ordering instead of
-                // just sorting by pickup time and losing that prioritization.
                 order: [[6, 'asc'], [0, 'asc']],
                 columnDefs: [
                     { orderable: false, targets: [2, 4] }
