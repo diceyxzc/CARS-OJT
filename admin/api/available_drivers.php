@@ -9,6 +9,9 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin') {
     exit();
 }
 
+/* Use to get Date, PickupTime, and Dropoff time of the system 
+   While also using Pickuptime insted of system time to determine dropoff_time
+   Get booking times from URL. Defaults: today, now, and now + 1 hour. */
 $date = $_GET['date'] ?? date('Y-m-d');
 $pickup_time = $_GET['pickup'] ?? date('H:i:s');
 $dropoff_time = $_GET['dropoff'] ?? date('H:i:s', strtotime($pickup_time . ' + 1 hour'));
@@ -32,9 +35,10 @@ $stmt = $pdo->prepare("
     )
     ORDER BY d.name
 ");
+// When Execute Search and Fetch drivers availability based on date and time filters
 $stmt->execute([$date, $dropoff_time, $pickup_time]);
 $drivers = $stmt->fetchAll();
-
+// Give the search results back to the webpage so it can show them.
 echo json_encode([
     'success' => true,
     'data' => $drivers

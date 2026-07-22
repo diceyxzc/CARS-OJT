@@ -178,6 +178,6 @@ $response = [
     ]
 ];
 
-// Output JSON
+//  Return JSON response and stop execution
 echo json_encode($response);
 exit();

@@ -22,6 +22,8 @@ $cars = $pdo->query("
     ORDER BY c.brand
 ")->fetchAll();
 
+/* Count all the cars, figure out which ones have drivers, and group them by their current status 
+(available, in use, or under maintenance). */
 $total_cars = count($cars);
 $assigned = 0;
 $unassigned = 0;
@@ -40,6 +42,7 @@ foreach ($cars as $car) {
     }
 }
 
+// Give the webpage all the car data and stats it needs to display the fleet management dashboard in one request.
 echo json_encode([
     'success' => true,
     'data' => [
