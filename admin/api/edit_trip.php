@@ -192,8 +192,8 @@ $all_passengers = $all_passengers->fetchAll();
 <html>
 <head>
     <title>Edit Trip - CARS</title>
-    <link rel="stylesheet" href="/assets/css/style.css">
-    <link rel="stylesheet" href="/admin/assets/css/admin.css">
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../admin/assets/css/admin.css">
     <style>
         body {
             background: #f4f6f9;
@@ -782,7 +782,7 @@ $all_passengers = $all_passengers->fetchAll();
         <?php endif; ?>
     </div>
 
-    <script src="/assets/js/script.js"></script>
-    <script src="/admin/assets/js/admin-requests.js"></script>
+    <script src="../assets/js/script.js"></script>
+    <script src="../admin/assets/js/admin-requests.js"></script>
 </body>
 </html>
