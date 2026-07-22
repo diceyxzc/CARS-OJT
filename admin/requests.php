@@ -504,6 +504,22 @@ foreach ($approved_trips as $key => $t) {
 
 $approved_drivers = groupTripsByDriver($approved_trips);
 
+/**
+ * Normalizes a user-submitted time (HH:MM or HH:MM:SS) into HH:MM:SS.
+ * Falls back to the current time if missing or malformed — never trusts
+ * the raw client value directly into the query.
+ */
+function normalizeTimeInput($value) {
+    if (empty($value)) {
+        return date('H:i:s');
+    }
+    if (preg_match('/^([01]\d|2[0-3]):([0-5]\d)(:([0-5]\d))?$/', $value, $m)) {
+        $seconds = isset($m[4]) ? $m[4] : '00';
+        return $m[1] . ':' . $m[2] . ':' . $seconds;
+    }
+    return date('H:i:s');
+}
+
 // Trip Details now shows the selected date's trips - ONLY in_progress, completed, and pending (NO approved)
 $outgoing_stmt = $pdo->prepare("
     SELECT a.*, a.request_number,
@@ -524,6 +540,7 @@ $outgoing_trips = $outgoing_stmt->fetchAll();
 // Complete In Progress trip via AJAX (no page reload)
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['complete_inprogress_ajax'])) {
     $id = $_POST['allocation_id'];
+    $actual_time = normalizeTimeInput($_POST['actual_time'] ?? null);
 
     $car_stmt = $pdo->prepare("SELECT car_id FROM tbl_allocations WHERE allocation_id = ? AND status = 'in_progress'");
     $car_stmt->execute([$id]);
@@ -532,15 +549,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['complete_inprogress_aj
     if ($allocation) {
         $car_id = $allocation['car_id'];
 
-        $stmt = $pdo->prepare("UPDATE tbl_allocations SET status = 'completed', actual_dropoff_time = CURTIME() WHERE allocation_id = ? AND status = 'in_progress'");
-        $stmt->execute([$id]);
+        $stmt = $pdo->prepare("UPDATE tbl_allocations SET status = 'completed', actual_dropoff_time = ? WHERE allocation_id = ? AND status = 'in_progress'");
+        $stmt->execute([$actual_time, $id]);
 
         if ($stmt->rowCount() > 0) {
             $car_update = $pdo->prepare("UPDATE tbl_cars SET status = 'available', status_updated_at = NOW() WHERE car_id = ?");
             $car_update->execute([$car_id]);
 
-            $log = $pdo->prepare("INSERT INTO tbl_audit_logs (user_id, action, allocation_id, details, timestamp) VALUES (?, 'completed', ?, 'Trip completed via AJAX, car set to available', NOW())");
-            $log->execute([$_SESSION['user_id'], $id]);
+            $log = $pdo->prepare("INSERT INTO tbl_audit_logs (user_id, action, allocation_id, details, timestamp) VALUES (?, 'completed', ?, ?, NOW())");
+            $log->execute([$_SESSION['user_id'], $id, "Trip completed via AJAX, actual dropoff time set to $actual_time, car set to available"]);
 
             echo json_encode(['success' => true, 'message' => 'Trip marked as completed successfully!']);
         } else {
@@ -651,6 +668,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update'])) {
 // Complete In Progress trip via GET (for the Trip Details tab)
 if (isset($_GET['complete_inprogress'])) {
     $id = $_GET['complete_inprogress'];
+    $actual_time = normalizeTimeInput($_GET['actual_time'] ?? null);
 
     $car_stmt = $pdo->prepare("SELECT car_id FROM tbl_allocations WHERE allocation_id = ? AND status = 'in_progress'");
     $car_stmt->execute([$id]);
@@ -659,15 +677,15 @@ if (isset($_GET['complete_inprogress'])) {
     if ($allocation) {
         $car_id = $allocation['car_id'];
 
-        $stmt = $pdo->prepare("UPDATE tbl_allocations SET status = 'completed', actual_dropoff_time = CURTIME() WHERE allocation_id = ? AND status = 'in_progress'");
-        $stmt->execute([$id]);
+        $stmt = $pdo->prepare("UPDATE tbl_allocations SET status = 'completed', actual_dropoff_time = ? WHERE allocation_id = ? AND status = 'in_progress'");
+        $stmt->execute([$actual_time, $id]);
 
         if ($stmt->rowCount() > 0) {
             $car_update = $pdo->prepare("UPDATE tbl_cars SET status = 'available', status_updated_at = NOW() WHERE car_id = ?");
             $car_update->execute([$car_id]);
 
-            $log = $pdo->prepare("INSERT INTO tbl_audit_logs (user_id, action, allocation_id, details, timestamp) VALUES (?, 'completed', ?, 'Trip completed manually, car set to available', NOW())");
-            $log->execute([$_SESSION['user_id'], $id]);
+            $log = $pdo->prepare("INSERT INTO tbl_audit_logs (user_id, action, allocation_id, details, timestamp) VALUES (?, 'completed', ?, ?, NOW())");
+            $log->execute([$_SESSION['user_id'], $id, "Trip completed manually, actual dropoff time set to $actual_time, car set to available"]);
             $success = "Trip marked as completed successfully!";
         } else {
             $error = "Failed to complete trip or trip not found.";
@@ -820,6 +838,7 @@ if (isset($_GET['cancel_inprogress'])) {
 
 if (isset($_GET['start_trip'])) {
     $id = $_GET['start_trip'];
+    $actual_time = normalizeTimeInput($_GET['actual_time'] ?? null);
 
     $stmt = $pdo->prepare("SELECT * FROM tbl_allocations WHERE allocation_id = ?");
     $stmt->execute([$id]);
@@ -832,15 +851,15 @@ if (isset($_GET['start_trip'])) {
         if (!$check['startable']) {
             $error = $check['reason'];
         } else {
-            $update = $pdo->prepare("UPDATE tbl_allocations SET status = 'in_progress', actual_pickup_time = CURTIME() WHERE allocation_id = ? AND status = 'approved'");
-            $update->execute([$id]);
+            $update = $pdo->prepare("UPDATE tbl_allocations SET status = 'in_progress', actual_pickup_time = ? WHERE allocation_id = ? AND status = 'approved'");
+            $update->execute([$actual_time, $id]);
 
             if ($update->rowCount() > 0) {
                 $car_update = $pdo->prepare("UPDATE tbl_cars SET status = 'in_use', status_updated_at = NOW() WHERE car_id = ?");
                 $car_update->execute([$trip['car_id']]);
 
-                $log = $pdo->prepare("INSERT INTO tbl_audit_logs (user_id, action, allocation_id, details, timestamp) VALUES (?, 'started', ?, 'Trip started manually', NOW())");
-                $log->execute([$_SESSION['user_id'], $id]);
+                $log = $pdo->prepare("INSERT INTO tbl_audit_logs (user_id, action, allocation_id, details, timestamp) VALUES (?, 'started', ?, ?, NOW())");
+                $log->execute([$_SESSION['user_id'], $id, "Trip started manually, actual pickup time set to $actual_time"]);
 
                 $success = "Trip started!";
             } else {
@@ -858,6 +877,7 @@ if (isset($_GET['start_trip'])) {
 // Start Trip via AJAX (no page reload)
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['start_trip_ajax'])) {
     $id = $_POST['allocation_id'];
+    $actual_time = normalizeTimeInput($_POST['actual_time'] ?? null);
 
     $stmt = $pdo->prepare("SELECT * FROM tbl_allocations WHERE allocation_id = ?");
     $stmt->execute([$id]);
@@ -874,15 +894,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['start_trip_ajax'])) {
         exit();
     }
 
-    $update = $pdo->prepare("UPDATE tbl_allocations SET status = 'in_progress', actual_pickup_time = CURTIME() WHERE allocation_id = ? AND status = 'approved'");
-    $update->execute([$id]);
+    $update = $pdo->prepare("UPDATE tbl_allocations SET status = 'in_progress', actual_pickup_time = ? WHERE allocation_id = ? AND status = 'approved'");
+    $update->execute([$actual_time, $id]);
 
     if ($update->rowCount() > 0) {
         $car_update = $pdo->prepare("UPDATE tbl_cars SET status = 'in_use', status_updated_at = NOW() WHERE car_id = ?");
         $car_update->execute([$trip['car_id']]);
 
-        $log = $pdo->prepare("INSERT INTO tbl_audit_logs (user_id, action, allocation_id, details, timestamp) VALUES (?, 'started', ?, 'Trip started via AJAX', NOW())");
-        $log->execute([$_SESSION['user_id'], $id]);
+        $log = $pdo->prepare("INSERT INTO tbl_audit_logs (user_id, action, allocation_id, details, timestamp) VALUES (?, 'started', ?, ?, NOW())");
+        $log->execute([$_SESSION['user_id'], $id, "Trip started via AJAX, actual pickup time set to $actual_time"]);
 
         echo json_encode(['success' => true, 'message' => 'Trip started!']);
     } else {
@@ -1221,6 +1241,12 @@ function getTripStartability($pdo, $trip) {
         return ['startable' => false, 'reason' => 'Car is currently in use on another trip.'];
     }
 
+    $check3 = $pdo->prepare("SELECT COUNT(*) FROM tbl_cars WHERE car_id = ? AND status = 'under_maintenance'");
+    $check3->execute([$trip['car_id']]);
+    if ($check3->fetchColumn() > 0) {
+        return ['startable' => false, 'reason' => 'Car is currently under maintenance.'];
+    }
+
     $next = $pdo->prepare("
         SELECT allocation_id FROM tbl_allocations 
         WHERE driver_id = ? AND date = ? AND status = 'approved' 
@@ -1270,9 +1296,9 @@ function getAvailableDrivers($pdo, $date, $pickup_time, $dropoff_time = null) {
 <html>
 <head>
     <title>Requests - CARS</title>
-    <link rel="stylesheet" href="/assets/css/style.css">
-    <link rel="stylesheet" href="/admin/assets/css/admin.css">
-    <link rel="stylesheet" href="/admin/assets/css/admin-requests.css">
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../admin/assets/css/admin.css">
+    <link rel="stylesheet" href="../admin/assets/css/admin-requests.css">
     <link href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -1648,6 +1674,10 @@ function getAvailableDrivers($pdo, $date, $pickup_time, $dropoff_time = null) {
                     <strong>Date:</strong> <span id="completeInprogressDate">-</span><br>
                     <strong>Pickup Time:</strong> <span id="completeInprogressPickup">-</span>
                 </div>
+                <div class="form-group floating-group" style="margin-top:12px;">
+                    <input type="time" class="form-control-modern" placeholder=" " id="completeInprogressActualTime" required>
+                    <label for="completeInprogressActualTime">Actual Dropoff Time <span class="required">*</span></label>
+                </div>
                 <div class="modal-buttons">
                     <button type="button" class="btn btn-cancel" onclick="closeCompleteInprogressModal()">Cancel</button>
                     <a href="#" class="btn btn-complete-inprogress" id="confirmCompleteInprogressBtn">Complete Trip</a>
@@ -1668,6 +1698,10 @@ function getAvailableDrivers($pdo, $date, $pickup_time, $dropoff_time = null) {
                     <strong>Car:</strong> <span id="startTripCar">-</span><br>
                     <strong>Driver:</strong> <span id="startTripDriver">-</span><br>
                     <strong>Scheduled Pickup:</strong> <span id="startTripPickup">-</span>
+                </div>
+                <div class="form-group floating-group" style="margin-top:12px;">
+                    <input type="time" class="form-control-modern" placeholder=" " id="startTripActualTime" required>
+                    <label for="startTripActualTime">Actual Pickup Time <span class="required">*</span></label>
                 </div>
                 <div class="modal-buttons">
                     <button type="button" class="btn btn-cancel" onclick="closeStartTripModal()">Cancel</button>
@@ -2346,8 +2380,8 @@ function getAvailableDrivers($pdo, $date, $pickup_time, $dropoff_time = null) {
     <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
-    <script src="/assets/js/script.js"></script>
-    <script src="/admin/assets/js/admin.js"></script>
-    <script src="/admin/assets/js/admin-requests.js"></script>
+    <script src="../assets/js/script.js"></script>
+    <script src="../admin/assets/js/admin.js"></script>
+    <script src="../admin/assets/js/admin-requests.js"></script>
 </body>
 </html>

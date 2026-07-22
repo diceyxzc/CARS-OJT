@@ -24,6 +24,13 @@ function validateDropoffTime() {
     }
 }
 
+function nowTimeValue() {
+    var now = new Date();
+    var h = String(now.getHours()).padStart(2, '0');
+    var m = String(now.getMinutes()).padStart(2, '0');
+    return h + ':' + m;
+}
+
 // ========================================
 // Available Drivers (server-checked, respects full date+time overlap)
 // ========================================
@@ -281,9 +288,6 @@ function addPassenger() {
                 if (messageDiv) messageDiv.innerHTML = '<span style="color: #c62828;">' + data.message + '</span>';
             }
         })
-        .catch(function() {
-            if (messageDiv) messageDiv.innerHTML = '<span style="color: #c62828;">Error adding passenger. Please try again.</span>';
-        });
 }
 
 function deletePassenger(passengerId, passengerName) {
@@ -1521,6 +1525,10 @@ function openCompleteInprogressModal(tripId, carBrand, driverName, tripDate, pic
     document.getElementById('completeInprogressDriver').textContent = driverName;
     document.getElementById('completeInprogressDate').textContent = tripDate;
     document.getElementById('completeInprogressPickup').textContent = pickupTime;
+
+    var timeInput = document.getElementById('completeInprogressActualTime');
+    if (timeInput) timeInput.value = nowTimeValue();
+
     confirmBtn.onclick = function(e) {
         e.preventDefault();
         completeInprogressTrip(tripId);
@@ -1530,6 +1538,14 @@ function openCompleteInprogressModal(tripId, carBrand, driverName, tripDate, pic
 }
 function completeInprogressTrip(tripId) {
     var confirmBtn = document.getElementById('confirmCompleteInprogressBtn');
+    var timeInput = document.getElementById('completeInprogressActualTime');
+    var actualTime = timeInput ? timeInput.value : '';
+
+    if (!actualTime) {
+        alert('Please set the actual dropoff time.');
+        return;
+    }
+
     var originalText = confirmBtn.innerHTML;
     confirmBtn.innerHTML = 'Completing...';
     confirmBtn.style.pointerEvents = 'none';
@@ -1537,6 +1553,7 @@ function completeInprogressTrip(tripId) {
     var formData = new FormData();
     formData.append('complete_inprogress_ajax', '1');
     formData.append('allocation_id', tripId);
+    formData.append('actual_time', actualTime);
 
     fetch(window.location.pathname, { method: 'POST', body: formData })
         .then(function(r) { return r.json(); })
@@ -1564,6 +1581,14 @@ function closeCompleteInprogressModal() {
 
 function startTripAjax(tripId) {
     var confirmBtn = document.getElementById('confirmStartTripBtn');
+    var timeInput = document.getElementById('startTripActualTime');
+    var actualTime = timeInput ? timeInput.value : '';
+
+    if (!actualTime) {
+        alert('Please set the actual pickup time.');
+        return;
+    }
+
     var originalText = confirmBtn.innerHTML;
     confirmBtn.innerHTML = 'Starting...';
     confirmBtn.style.pointerEvents = 'none';
@@ -1571,6 +1596,7 @@ function startTripAjax(tripId) {
     var formData = new FormData();
     formData.append('start_trip_ajax', '1');
     formData.append('allocation_id', tripId);
+    formData.append('actual_time', actualTime);
 
     fetch(window.location.pathname, { method: 'POST', body: formData })
         .then(function(r) { return r.json(); })
@@ -2300,6 +2326,10 @@ function openStartTripModal(tripId, requestor, carBrand, carPlate, driverName, p
     document.getElementById('startTripCar').textContent = carBrand + ' (' + carPlate + ')';
     document.getElementById('startTripDriver').textContent = driverName;
     document.getElementById('startTripPickup').textContent = pickupTime;
+
+    var timeInput = document.getElementById('startTripActualTime');
+    if (timeInput) timeInput.value = nowTimeValue();
+
     confirmStartBtn.onclick = function(e) {
         e.preventDefault();
         startTripAjax(tripId);
