@@ -1466,12 +1466,16 @@ foreach ($trips as $trip) {
     // ============================================================
     document.addEventListener('DOMContentLoaded', function() {
         console.log('🚀 Driver schedule auto-update starting...');
-        
         const apiUrl = '../admin/api/driver_schedule_status.php';
         let currentWeek = '<?= $week_start ?>';
         let updateInterval = null;
         let isFetching = false;
-        
+        // Close modal when clicking outside
+    document.getElementById('printModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closePrintModal();
+        }
+    });
         function getStatusDisplay(status) {
             const display = {
                 'pending': 'Pending',
