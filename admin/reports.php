@@ -709,8 +709,8 @@ $export_pdf_query = http_build_query($export_pdf_params);
                                     <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Status</th>
                                     <th style="text-align:center; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d; width:100px;">Date</th>
                                     <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d; width:90px;">Departure</th>
-                                    <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d; width:70px;">Arrival</th>
-                                    <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Car</th>
+                                    <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d; width:90px;">Arrival</th>
+                                    <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d; width:120px;">Car</th>
                                     <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Driver</th>
                                     <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Route</th>
                                     <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Passengers</th>
@@ -730,10 +730,10 @@ $export_pdf_query = http_build_query($export_pdf_params);
                                     $sc = $status_colors[$t['status']] ?? ['bg' => '#f1f3f5', 'text' => '#495057', 'border' => '#6c757d'];
                                     $raw_date = date('Y-m-d', strtotime($t['date']));
 
-                                    $actual_pickup = getActualTimeInfo($r['actual_pickup_time'] ?? null, $r['pickup_time'], 'Not started');
-                                    $actual_dropoff = getActualTimeInfo($r['actual_dropoff_time'] ?? null, $r['dropoff_time'], 'Not completed');
+                                    $actual_pickup = getActualTimeInfo($t['actual_pickup_time'] ?? null, $t['pickup_time'], 'Not started');
+                                    $actual_dropoff = getActualTimeInfo($t['actual_dropoff_time'] ?? null, $t['dropoff_time'], 'Not completed');
 
-                                    if ($r['status'] === 'cancelled') {
+                                    if ($t['status'] === 'cancelled') {
                                         if ($actual_pickup['status'] === 'none') $actual_pickup = ['text' => 'Cancelled', 'status' => 'none'];
                                         if ($actual_dropoff['status'] === 'none') $actual_dropoff = ['text' => 'Cancelled', 'status' => 'none'];
                                     }
@@ -755,14 +755,14 @@ $export_pdf_query = http_build_query($export_pdf_params);
                                         <?= date('g:i A', strtotime($t['pickup_time'])) ?>
                                         <br>
                                         <span style="font-size:0.65rem; font-weight:600; color:<?= $actual_time_colors[$actual_pickup['status']] ?>;">
-                                            <?= $actual_pickup['status'] === 'none' ? htmlspecialchars($actual_pickup['text']) : 'Actual: ' . htmlspecialchars($actual_pickup['text']) ?>
+                                            <?= $actual_pickup['status'] === 'none' ? htmlspecialchars($actual_pickup['text']) : htmlspecialchars($actual_pickup['text']) ?>
                                         </span>
                                     </td>
                                     <td style="padding:6px 10px; border-bottom:1px solid #f1f3f5;">
                                         <?= $t['dropoff_time'] ? date('g:i A', strtotime($t['dropoff_time'])) : '-' ?>
                                         <br>
                                         <span style="font-size:0.65rem; font-weight:600; color:<?= $actual_time_colors[$actual_dropoff['status']] ?>;">
-                                            <?= $actual_dropoff['status'] === 'none' ? htmlspecialchars($actual_dropoff['text']) : 'Actual: ' . htmlspecialchars($actual_dropoff['text']) ?>
+                                            <?= $actual_dropoff['status'] === 'none' ? htmlspecialchars($actual_dropoff['text']) : htmlspecialchars($actual_dropoff['text']) ?>
                                         </span>
                                     </td>
                                     <td style="padding:6px 10px; border-bottom:1px solid #f1f3f5;">

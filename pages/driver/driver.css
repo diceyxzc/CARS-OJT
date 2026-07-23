@@ -57,23 +57,23 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 8px;  /* Changed from 20px to 8px */
-    margin-top: 0;  /* Added - remove top margin */
+    margin-bottom: 8px; 
+    margin-top: 0;  
     flex-wrap: wrap;
-    gap: 8px;  /* Changed from 12px to 8px */
-    padding-top: 2px;  /* Added - minimal top padding */
+    gap: 8px; 
+    padding-top: 2px;  
 }
 
 .page-header h1 {
-    font-size: 1.4rem;  /* Slightly smaller */
+    font-size: 1.4rem;  
     font-weight: 700;
     color: #1a237e;
-    margin: 0;  /* Added - remove default margin */
+    margin: 0;  
 }
 
 .page-header .sub {
     color: #6c757d;
-    font-size: 0.85rem;  /* Slightly smaller */
+    font-size: 0.85rem;  
     margin: 0;  /* Added - remove default margin */
 }
 
@@ -666,6 +666,326 @@ body {
 
 .modal-footer .btn-secondary:hover {
     background: #dde0e3;
+}
+
+/* Print button style */
+.btn-print {
+    background: #1921c3;
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+}
+.btn-print:hover {
+    background: #3942ee;
+}
+.week-nav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+}
+.week-nav .week-label {
+    font-weight: 600;
+    font-size: 14px;
+    color: #1a1a2e;
+}
+
+/* ===== MODAL STYLES ===== */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(5px);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-overlay.show {
+    display: flex;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { transform: translateY(30px) scale(0.95); opacity: 0; }
+    to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.modal-container {
+    background: #ffffff;
+    border-radius: 16px;
+    max-width: 550px;
+    width: 90%;
+    max-height: 80vh;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 24px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.modal-header h3 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 0;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #999;
+    cursor: pointer;
+    padding: 0 8px;
+    transition: color 0.3s;
+}
+
+.modal-close:hover {
+    color: #dc3545;
+}
+
+.modal-body {
+    padding: 24px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.modal-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 10px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 10px;
+}
+
+/* ===== OPTION BUTTONS ===== */
+.modal-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.modal-option-btn {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 20px;
+    border: 2px solid #e8ecf1;
+    border-radius: 12px;
+    background: #f8f9fa;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    text-align: left;
+}
+
+.modal-option-btn:hover {
+    border-color: #28a745;
+    background: #f0f9f0;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+
+.modal-option-btn .option-icon {
+    font-size: 28px;
+    flex-shrink: 0;
+}
+
+.modal-option-btn .option-text {
+    flex: 1;
+}
+
+.modal-option-btn .option-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a1a2e;
+}
+
+.modal-option-btn .option-desc {
+    font-size: 12px;
+    color: #6c757d;
+    margin-top: 2px;
+}
+
+.btn-print-all {
+    border-color: #28a745;
+}
+
+.btn-print-all:hover {
+    border-color: #28a745;
+    background: #e8f5e9;
+}
+
+.btn-select-drivers {
+    border-color: #007bff;
+}
+
+.btn-select-drivers:hover {
+    border-color: #007bff;
+    background: #e3f2fd;
+}
+
+/* ===== DRIVER SELECTION ===== */
+.modal-select-all {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    font-weight: 600;
+    font-size: 14px;
+    color: #1a1a2e;
+}
+
+.modal-select-all input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    margin-right: 8px;
+    cursor: pointer;
+}
+
+.modal-select-all label {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.modal-select-all span {
+    color: #6c757d;
+    font-weight: 400;
+}
+
+.modal-driver-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.modal-driver-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.modal-driver-list::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 10px;
+}
+
+.modal-driver-list::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 10px;
+}
+
+.modal-driver-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    transition: background 0.2s;
+    cursor: pointer;
+}
+
+.modal-driver-item:hover {
+    background: #e9ecef;
+}
+
+.modal-driver-item input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.modal-driver-item .driver-info {
+    flex: 1;
+}
+
+.modal-driver-item .driver-name {
+    font-weight: 600;
+    font-size: 13px;
+    color: #1a1a2e;
+}
+
+.modal-driver-item .driver-car {
+    font-size: 11px;
+    color: #6c757d;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 24px;
+    border-top: 2px solid #f0f0f0;
+}
+
+.btn {
+    padding: 10px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: #007bff;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #0069d9;
+}
+
+.btn-secondary {
+    background: #e9ecef;
+    color: #333;
+}
+
+.btn-secondary:hover {
+    background: #dde0e3;
+}
+
+@media print {
+    .no-print { display: none !important; }
+    body { background: white !important; padding: 10px; }
+    .schedule-wrapper { overflow: visible !important; }
+    .schedule-grid { width: 100% !important; }
+    .trip-card { break-inside: avoid; page-break-inside: avoid; }
+    .schedule-row { break-inside: avoid; page-break-inside: avoid; }
 }
 
 @media (max-width: 480px) {

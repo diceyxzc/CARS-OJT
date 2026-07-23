@@ -579,7 +579,7 @@ $status_priority = ['in_progress' => 0, 'approved' => 1, 'completed' => 2];
             $('#todayScheduleTable').DataTable({
                 pageLength: 5,
                 lengthMenu: [[5, 10, 25, -1], [5, 10, 25, "All"]],
-                order: [[6, 'asc'], [0, 'asc']],
+                order: [[6, 'asc'], [0, 'desc']],
                 columnDefs: [
                     { orderable: false, targets: [2, 4] }
                 ],

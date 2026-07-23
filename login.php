@@ -57,10 +57,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 </head>
 <body class="login-page">
     <div class="login-container">
-        <div class="logo">
-            <h1>CARS</h1>
-            <p style="color:var(--gray); font-size:0.85rem;">Car Allocation Reservation System</p>
-        </div>
+    <div class="logo">
+        <img src="../assets/img/logo.png" alt="CARS Logo" style="width:80px; height:80px;">
+        <h1>CARS</h1>
+        <p style="color:var(--gray); font-size:0.85rem;">Car Allocation Reservation System</p>
+    </div>
         
         <?php if ($error): ?>
             <div class="alert alert-error">

@@ -1,0 +1,238 @@
+.trip-card-guard {
+    background: white;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    border-left: 4px solid #6c757d;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+.trip-card-guard.status-approved { border-left-color: #2e7d32; }
+.trip-card-guard.status-in_progress { border-left-color: #f57c00; }
+
+.trip-card-guard-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.trip-card-guard .trip-main-info {
+    font-size: 0.95rem;
+}
+.trip-card-guard .trip-main-info strong {
+    color: #1a237e;
+}
+.trip-card-guard .trip-sub-info {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-top: 4px;
+}
+.trip-card-guard .trip-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-shrink: 0;
+}
+.btn-guard-start {
+    background: #1a237e;
+    color: white;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+.btn-guard-start:hover { background: #283593; }
+.btn-guard-start:disabled {
+    background: #cfd3e6;
+    cursor: not-allowed;
+}
+.btn-guard-complete {
+    background: #2e7d32;
+    color: white;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+.btn-guard-complete:hover { background: #1b5e20; }
+.trip-blocked-reason {
+    font-size: 0.75rem;
+    color: #c62828;
+    margin-top: 4px;
+}
+
+/* Simple confirm modal for capturing actual time */
+.guard-modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+}
+.guard-modal-overlay.active { display: flex; }
+.guard-modal-box {
+    background: white;
+    border-radius: 10px;
+    padding: 24px;
+    width: 90%;
+    max-width: 420px;
+}
+.guard-modal-box h3 { margin-top: 0; color: #1a237e; }
+.guard-modal-box .form-group { margin-top: 12px; }
+.guard-modal-box label { display:block; font-size:0.85rem; font-weight:600; margin-bottom:4px; color:#1a1a2e; }
+.guard-modal-box input[type="time"] {
+    width: 100%;
+    padding: 8px 12px;
+    border: 2px solid #e9ecef;
+    border-radius: 6px;
+    font-size: 0.9rem;
+}
+.guard-modal-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 18px;
+}
+.guard-modal-buttons .btn-cancel {
+    background: #e9ecef;
+    color: #1a1a2e;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+ .week-nav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+}
+.week-nav .week-label {
+    font-weight: 600;
+    font-size: 14px;
+    color: #1a1a2e;
+}
+.schedule-wrapper {
+    overflow-x: auto;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+.schedule-grid {
+    display: flex;
+    flex-direction: column;
+    min-width: 900px;
+}
+.schedule-header {
+    display: grid;
+    grid-template-columns: 180px repeat(7, 1fr);
+    background: #f8f9fa;
+    border-bottom: 2px solid #1a1a2e;
+    font-weight: 700;
+    color: #1a1a2e;
+}
+.schedule-header .cell {
+    padding: 10px 6px;
+    text-align: center;
+    font-size: 0.8rem;
+    border-right: 1px solid #e8ecf1;
+}
+.schedule-header .cell:first-child {
+    text-align: left;
+    padding-left: 14px;
+}
+.schedule-header .cell:last-child { border-right: none; }
+.schedule-header .cell.today {
+    background: rgba(255, 193, 7, 0.15);
+}
+.schedule-row {
+    display: grid;
+    grid-template-columns: 180px repeat(7, 1fr);
+    border-bottom: 1px solid #f0f0f0;
+}
+.schedule-row:last-child { border-bottom: none; }
+.schedule-row .cell {
+    padding: 8px 6px;
+    text-align: center;
+    border-right: 1px solid #f0f0f0;
+    min-height: 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+.schedule-row .cell:first-child {
+    text-align: left;
+    padding-left: 14px;
+    display: block;
+    min-height: auto;
+}
+.schedule-row .cell:last-child { border-right: none; }
+.driver-name .car-info {
+    display: block;
+    font-weight: 400;
+    font-size: 0.7rem;
+    color: #6c757d;
+    margin-top: 2px;
+}
+.trip-card {
+    background: #f8f9fa;
+    border-radius: 4px;
+    padding: 5px 8px;
+    margin-bottom: 3px;
+    border-left: 3px solid #6c757d;
+    text-align: left;
+    font-size: 0.7rem;
+    width: 100%;
+}
+.trip-card:last-child { margin-bottom: 0; }
+.trip-time-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+.trip-time {
+    font-weight: 700;
+    color: #1a1a2e;
+}
+.trip-time-dropoff {
+    color: #6c757d;
+}
+.trip-location {
+    display: block;
+    font-size: 0.65rem;
+    color: #6c757d;
+    margin-top: 2px;
+}
+.trip-status {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: 8px;
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-top: 3px;
+}
+.trip-status.approved { background: #d4edda; color: #155724; }
+.trip-status.in_progress { background: #fff3cd; color: #856404; }
+.empty-cell { color: #dee2e6; font-size: 1rem; }
+.legend {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 12px;
+    font-size: 0.8rem;
+}
+.legend-item { display: flex; align-items: center; gap: 6px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.dot.approved { background: #2e7d32; }
+.dot.in_progress { background: #f57c00; }
