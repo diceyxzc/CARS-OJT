@@ -522,14 +522,12 @@ foreach ($trips as $trip) {
             <div class="modal-body">
                 <div class="modal-options">
                     <button class="modal-option-btn btn-print-all" onclick="printAllDrivers()">
-                        <span class="option-icon"></span>
                         <div class="option-text">
                             <div class="option-title">Print All Drivers</div>
                             <div class="option-desc">Print the complete schedule for all drivers</div>
                         </div>
                     </button>
                     <button class="modal-option-btn btn-select-drivers" onclick="showDriverSelection()">
-                        <span class="option-icon"></span>
                         <div class="option-text">
                             <div class="option-title">Select Drivers to Print</div>
                             <div class="option-desc">Choose specific drivers to print</div>
@@ -655,7 +653,6 @@ foreach ($trips as $trip) {
                     }
                     .dot-approved { background: #28a745; }
                     .dot-in_progress { background: #ffc107; }
-                    .dot-pending { background: #007bff; }
                     .print-stats .stat-spacer { flex: 1; }
                     .print-stats .stat-total {
                         font-weight: 600;
@@ -815,10 +812,6 @@ foreach ($trips as $trip) {
                         background: #fff3cd;
                         color: #856404;
                     }
-                    .trip-card .trip-status.pending {
-                        background: #cce5ff;
-                        color: #004085;
-                    }
                     .trip-card .trip-status.completed {
                         background: #d1ecf1;
                         color: #0c5460;
@@ -899,10 +892,6 @@ foreach ($trips as $trip) {
                         <span class="dot dot-in_progress"></span>
                         <strong id="inProgressCount">0</strong> In Progress
                     </div>
-                    <div class="stat-item">
-                        <span class="dot dot-pending"></span>
-                        <strong id="pendingCount">0</strong> Pending
-                    </div>
                     <div class="stat-spacer"></div>
                     <div class="stat-total">${tripCount}</div>
                 </div>
@@ -921,11 +910,9 @@ foreach ($trips as $trip) {
                     document.addEventListener('DOMContentLoaded', function() {
                         const approved = document.querySelectorAll('.trip-status.approved').length;
                         const inProgress = document.querySelectorAll('.trip-status.in_progress').length;
-                        const pending = document.querySelectorAll('.trip-status.pending').length;
                         
                         document.getElementById('approvedCount').textContent = approved;
                         document.getElementById('inProgressCount').textContent = inProgress;
-                        document.getElementById('pendingCount').textContent = pending;
                     });
                     
                     window.onload = function() {
@@ -1149,7 +1136,6 @@ foreach ($trips as $trip) {
                     }
                     .dot-approved { background: #28a745; }
                     .dot-in_progress { background: #ffc107; }
-                    .dot-pending { background: #007bff; }
                     .print-stats .stat-spacer { flex: 1; }
                     .print-stats .stat-total {
                         font-weight: 600;
@@ -1275,10 +1261,6 @@ foreach ($trips as $trip) {
                         background: #fff3cd;
                         color: #856404;
                     }
-                    .trip-card .trip-status.pending {
-                        background: #cce5ff;
-                        color: #004085;
-                    }
                     .empty-cell {
                         color: #dee2e6;
                         font-size: 14px;
@@ -1332,10 +1314,6 @@ foreach ($trips as $trip) {
                         <span class="dot dot-in_progress"></span>
                         <strong id="inProgressCount">0</strong> In Progress
                     </div>
-                    <div class="stat-item">
-                        <span class="dot dot-pending"></span>
-                        <strong id="pendingCount">0</strong> Pending
-                    </div>
                     <div class="stat-spacer"></div>
                     <div class="stat-total">${tripCount}</div>
                 </div>
@@ -1355,10 +1333,8 @@ foreach ($trips as $trip) {
                     document.addEventListener('DOMContentLoaded', function() {
                         const approved = document.querySelectorAll('.trip-status.approved').length;
                         const inProgress = document.querySelectorAll('.trip-status.in_progress').length;
-                        const pending = document.querySelectorAll('.trip-status.pending').length;
                         document.getElementById('approvedCount').textContent = approved;
                         document.getElementById('inProgressCount').textContent = inProgress;
-                        document.getElementById('pendingCount').textContent = pending;
                     });
                     window.onload = function() {
                         window.print();
@@ -1376,23 +1352,24 @@ foreach ($trips as $trip) {
     // ============================================================
     document.addEventListener('DOMContentLoaded', function() {
         console.log('🚀 Driver schedule auto-update starting...');
+        
+        // Close modal when clicking outside
+        document.getElementById('printModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closePrintModal();
+            }
+        });
+        
         const apiUrl = '../admin/api/driver_schedule_status.php';
         let currentWeek = '<?= $week_start ?>';
         let updateInterval = null;
         let isFetching = false;
-        // Close modal when clicking outside
-    document.getElementById('printModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closePrintModal();
-        }
-    });
+        
         function getStatusDisplay(status) {
             const display = {
-                'pending': 'Pending',
                 'approved': 'Approved',
-                'declined': 'Declined',
-                'completed': 'Completed',
                 'in_progress': 'In Progress',
+                'completed': 'Completed',
                 'cancelled': 'Cancelled'
             };
             return display[status] || status.replace('_', ' ');
@@ -1400,11 +1377,9 @@ foreach ($trips as $trip) {
         
         function getStatusClass(status) {
             const classes = {
-                'pending': 'pending',
                 'approved': 'approved',
-                'declined': 'declined',
-                'completed': 'completed',
                 'in_progress': 'in_progress',
+                'completed': 'completed',
                 'cancelled': 'cancelled'
             };
             return classes[status] || status;
