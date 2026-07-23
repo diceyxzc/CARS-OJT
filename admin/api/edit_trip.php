@@ -657,7 +657,7 @@ $all_passengers = $all_passengers->fetchAll();
                     </div>
                     <div class="floating-group">
                         <input type="time" class="form-control-modern" placeholder=" " name="pickup_time" id="edit_pickup_time" required value="<?= $trip_data['pickup_time'] ?>">
-                        <label for="edit_pickup_time">Pickup Time <span class="required">*</span></label>
+                        <label for="edit_pickup_time">Departure <span class="required">*</span></label>
                     </div>
                 </div>
 

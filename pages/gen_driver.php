@@ -77,31 +77,6 @@ foreach ($trips as $trip) {
     <link rel="stylesheet" href="../assets/css/style.css"> 
     <link rel="stylesheet" href="../pages/driver/driver.css"> 
     <style>
-        /* Inactive badge at the TOP of the driver cell */
-        .driver-name .status-badge-top {
-            display: block;
-            background: #c62828;
-            color: white;
-            font-size: 0.5rem;
-            padding: 1px 10px;
-            border-radius: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            margin-bottom: 2px;
-            width: fit-content;
-        }
-        /* Slight dimming for inactive drivers */
-        .schedule-row.inactive-driver {
-            opacity: 0.6;
-        }
-        .schedule-row.inactive-driver .driver-name {
-            color: #999;
-        }
-        .schedule-row.inactive-driver .trip-card {
-            opacity: 0.6;
-        }
-
         /* Print button style */
         .btn-print {
             background: #28a745;
@@ -377,24 +352,6 @@ foreach ($trips as $trip) {
             color: #6c757d;
         }
 
-        .modal-driver-item .driver-status {
-            font-size: 9px;
-            padding: 2px 10px;
-            border-radius: 10px;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .modal-driver-item .driver-status.active {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .modal-driver-item .driver-status.inactive {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
         .modal-footer {
             display: flex;
             justify-content: flex-end;
@@ -493,14 +450,9 @@ foreach ($trips as $trip) {
                 </div>
 
                 <!-- Rows -->
-                <?php foreach($drivers as $driver): 
-                    $is_inactive = $driver['status'] != 'active';
-                ?>
-                    <div class="schedule-row <?= $is_inactive ? 'inactive-driver' : '' ?>" data-driver-id="<?= $driver['driver_id'] ?>">
+                <?php foreach($drivers as $driver): ?>
+                    <div class="schedule-row" data-driver-id="<?= $driver['driver_id'] ?>">
                         <div class="cell driver-name">
-                            <?php if ($is_inactive): ?>
-                                <span class="status-badge-top">Inactive</span>
-                            <?php endif; ?>
                             <?= htmlspecialchars($driver['name']) ?>
                             <span class="car-info">
                                 <?php if ($driver['car_id']): ?>
@@ -704,7 +656,6 @@ foreach ($trips as $trip) {
                     .dot-approved { background: #28a745; }
                     .dot-in_progress { background: #ffc107; }
                     .dot-pending { background: #007bff; }
-                    .dot-inactive { background: #dc3545; }
                     .print-stats .stat-spacer { flex: 1; }
                     .print-stats .stat-total {
                         font-weight: 600;
@@ -766,8 +717,6 @@ foreach ($trips as $trip) {
                         border-bottom: 1px solid #f0f0f0;
                     }
                     .schedule-row:last-child { border-bottom: none; }
-                    .schedule-row.inactive-driver { opacity: 0.5; }
-                    .schedule-row.inactive-driver .driver-name { color: #999; }
                     
                     .schedule-row .cell {
                         padding: 6px 3px;
@@ -791,19 +740,6 @@ foreach ($trips as $trip) {
                     }
                     .schedule-row .cell:last-child { border-right: none; }
                     
-                    .driver-name .status-badge-top {
-                        display: inline-block;
-                        background: #dc3545;
-                        color: white;
-                        font-size: 8px;
-                        padding: 2px 12px;
-                        border-radius: 10px;
-                        font-weight: 700;
-                        text-transform: uppercase;
-                        letter-spacing: 0.5px;
-                        margin-bottom: 4px;
-                        width: fit-content;
-                    }
                     .driver-name .driver-fullname {
                         font-weight: 700;
                         font-size: 12px;
@@ -922,7 +858,6 @@ foreach ($trips as $trip) {
                         .schedule-header .cell { font-size: 11px; padding: 8px 4px; }
                         .schedule-header .cell .date-small { font-size: 9px; }
                         .schedule-row .cell { min-height: 55px; padding: 6px 3px; }
-                        .driver-name .status-badge-top { font-size: 8px; padding: 2px 12px; margin-bottom: 4px; }
                         .driver-name .driver-fullname { font-size: 12px; }
                         .driver-name .car-info { font-size: 9px; }
                         .trip-card { font-size: 9px; padding: 4px 6px; border-left-width: 3px; margin-bottom: 2px; }
@@ -945,7 +880,6 @@ foreach ($trips as $trip) {
                         .schedule-row { page-break-inside: avoid; }
                         .print-stats .stat-item .dot { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
                         .schedule-wrapper { border: 1px solid #dee2e6; }
-                        .driver-name .status-badge-top { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
                     }
                 </style>
             </head>
@@ -969,10 +903,6 @@ foreach ($trips as $trip) {
                         <span class="dot dot-pending"></span>
                         <strong id="pendingCount">0</strong> Pending
                     </div>
-                    <div class="stat-item">
-                        <span class="dot dot-inactive"></span>
-                        <strong id="inactiveCount">0</strong> Inactive Drivers
-                    </div>
                     <div class="stat-spacer"></div>
                     <div class="stat-total">${tripCount}</div>
                 </div>
@@ -984,7 +914,6 @@ foreach ($trips as $trip) {
                 </div>
                 
                 <div class="footer">
-                    <div class="stats">${tripCount}</div>
                     <div>CARS System | ${new Date().toLocaleDateString()}</div>
                 </div>
                 
@@ -993,12 +922,10 @@ foreach ($trips as $trip) {
                         const approved = document.querySelectorAll('.trip-status.approved').length;
                         const inProgress = document.querySelectorAll('.trip-status.in_progress').length;
                         const pending = document.querySelectorAll('.trip-status.pending').length;
-                        const inactive = document.querySelectorAll('.inactive-driver').length;
                         
                         document.getElementById('approvedCount').textContent = approved;
                         document.getElementById('inProgressCount').textContent = inProgress;
                         document.getElementById('pendingCount').textContent = pending;
-                        document.getElementById('inactiveCount').textContent = inactive;
                     });
                     
                     window.onload = function() {
@@ -1052,7 +979,7 @@ foreach ($trips as $trip) {
             
             if (nameEl) {
                 const fullText = nameEl.textContent.trim();
-                name = fullText.replace('Inactive', '').trim().split('Designation')[0].trim();
+                name = fullText.split('Designation')[0].trim();
                 if (!name) name = 'Unknown Driver';
                 
                 const carInfo = nameEl.querySelector('.car-info');
@@ -1060,8 +987,6 @@ foreach ($trips as $trip) {
                     carText = carInfo.textContent.trim();
                 }
             }
-            
-            const isInactive = row.classList.contains('inactive-driver');
             
             const item = document.createElement('div');
             item.className = 'modal-driver-item';
@@ -1071,7 +996,6 @@ foreach ($trips as $trip) {
                     <div class="driver-name">${name}</div>
                     <div class="driver-car">${carText}</div>
                 </div>
-                <span class="driver-status ${isInactive ? 'inactive' : 'active'}">${isInactive ? 'Inactive' : 'Active'}</span>
             `;
             
             item.addEventListener('click', function(e) {
@@ -1226,7 +1150,6 @@ foreach ($trips as $trip) {
                     .dot-approved { background: #28a745; }
                     .dot-in_progress { background: #ffc107; }
                     .dot-pending { background: #007bff; }
-                    .dot-inactive { background: #dc3545; }
                     .print-stats .stat-spacer { flex: 1; }
                     .print-stats .stat-total {
                         font-weight: 600;
@@ -1276,7 +1199,6 @@ foreach ($trips as $trip) {
                         border-bottom: 1px solid #f0f0f0;
                     }
                     .schedule-row:last-child { border-bottom: none; }
-                    .schedule-row.inactive-driver { opacity: 0.5; }
                     .schedule-row .cell {
                         padding: 6px 3px;
                         text-align: center;
@@ -1294,18 +1216,6 @@ foreach ($trips as $trip) {
                         min-height: auto;
                     }
                     .schedule-row .cell:last-child { border-right: none; }
-                    .driver-name .status-badge-top {
-                        display: inline-block;
-                        background: #dc3545;
-                        color: white;
-                        font-size: 8px;
-                        padding: 2px 12px;
-                        border-radius: 10px;
-                        font-weight: 700;
-                        text-transform: uppercase;
-                        letter-spacing: 0.5px;
-                        margin-bottom: 4px;
-                    }
                     .driver-name .driver-fullname {
                         font-weight: 700;
                         font-size: 12px;
@@ -1523,12 +1433,10 @@ foreach ($trips as $trip) {
 
         function updateCounters(data) {
             let totalDriverCount = 0;
-            let activeDriverCount = 0;
             let totalActiveTrips = 0;
 
             if (data.drivers) {
                 totalDriverCount = data.drivers.length;
-                activeDriverCount = data.drivers.filter(d => d.status === 'active').length;
             }
 
             if (data.week_days) {
@@ -1548,7 +1456,6 @@ foreach ($trips as $trip) {
             const tripCountEl = document.getElementById('tripCount');
             if (tripCountEl) {
                 tripCountEl.textContent = totalDriverCount + ' total drivers • ' + 
-                    (totalDriverCount - activeDriverCount) + ' inactive • ' + 
                     totalActiveTrips + ' upcoming trips';
             }
 
@@ -1620,12 +1527,10 @@ foreach ($trips as $trip) {
                 const driverId = driver.driver_id;
                 const driverName = driver.name || 'Unknown Driver';
                 const hasCar = driver.car_id || driver.brand;
-                const isInactive = driver.status !== 'active';
                 
                 html += `
-                    <div class="schedule-row ${isInactive ? 'inactive-driver' : ''}" data-driver-id="${driverId}">
+                    <div class="schedule-row" data-driver-id="${driverId}">
                         <div class="cell driver-name">
-                            ${isInactive ? `<span class="status-badge-top">Inactive</span>` : ''}
                             ${escapeHtml(driverName)}
                             <span class="car-info">
                                 ${hasCar ? `
@@ -1680,7 +1585,6 @@ foreach ($trips as $trip) {
             grid.innerHTML = html;
             
             let totalDrivers = driversData.length;
-            let activeDrivers = driversData.filter(d => d.status === 'active').length;
             let totalTrips = 0;
             
             if (data.week_days) {
@@ -1700,7 +1604,6 @@ foreach ($trips as $trip) {
             const tripCountEl = document.getElementById('tripCount');
             if (tripCountEl) {
                 tripCountEl.textContent = totalDrivers + ' total drivers • ' + 
-                    (totalDrivers - activeDrivers) + ' inactive • ' + 
                     totalTrips + ' upcoming trips';
             }
             

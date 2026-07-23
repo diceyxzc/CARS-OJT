@@ -483,11 +483,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_request'])) {
                             </div>
                             <div class="form-group floating-group">
                                 <input type="time" class="form-control-modern" placeholder=" " name="pickup_time" id="req_pickup_time" required value="<?= htmlspecialchars($_POST['pickup_time'] ?? '') ?>">
-                                <label for="req_pickup_time">Pickup Time <span class="required">*</span></label>
+                                <label for="req_pickup_time">Departure <span class="required">*</span></label>
                             </div>
                             <div class="form-group floating-group">
                                 <input type="time" class="form-control-modern" placeholder=" " name="dropoff_time" id="req_dropoff_time" required value="<?= htmlspecialchars($_POST['dropoff_time'] ?? '') ?>">
-                                <label for="req_dropoff_time">Dropoff Time <span class="required">*</span></label>
+                                <label for="req_dropoff_time">Arrival <span class="required">*</span></label>
                             </div>
                         </div>
                         

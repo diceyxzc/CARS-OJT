@@ -26,7 +26,6 @@ $week_end = date('Y-m-d', strtotime('sunday this week'));
 $approved_trips_count = $pdo->query("
     SELECT COUNT(*) FROM tbl_allocations 
     WHERE status = 'approved'
-    AND date = CURDATE()
 ")->fetchColumn();
 
 // Get total trips from first day of month to today - EXCLUDING cancelled and pending
@@ -313,12 +312,6 @@ $status_priority = ['in_progress' => 0, 'approved' => 1, 'completed' => 2];
                     <div class="label" style="color: #d32f2f;">Pending Requests</div>
                 </div>
             </a>
-            <a href="requests.php?tab=approved" class="stat-box-link">
-                <div class="stat-box" style="border-left-color: #6a1b9a;">
-                    <div class="number" style="color: #6a1b9a;" id="statApproved"><?= $approved_trips_count ?></div>
-                    <div class="label" style="color: #6a1b9a;">Approved Trips</div>
-                </div>
-            </a>
             <a href="requests.php?tab=outgoing" class="stat-box-link">
                 <div class="stat-box" style="border-left-color: #f9a825;">
                     <div class="number" style="color: #f9a825;" id="statOutgoing"><?= $in_progress_today ?></div>
@@ -329,6 +322,12 @@ $status_priority = ['in_progress' => 0, 'approved' => 1, 'completed' => 2];
                 <div class="stat-box" style="border-left-color: #00838f;">
                     <div class="number" style="color: #00838f;" id="statToday"><?= $today_trips ?></div>
                     <div class="label" style="color: #00838f;">Today's Trips</div>
+                </div>
+            </a>
+            <a href="reports.php?type=trips&filter_status=approved" class="stat-box-link">
+                <div class="stat-box" style="border-left-color: #6a1b9a;">
+                    <div class="number" style="color: #6a1b9a;" id="statApproved"><?= $approved_trips_count ?></div>
+                    <div class="label" style="color: #6a1b9a;">Approved Trips</div>
                 </div>
             </a>
             <a href="reports.php?type=trips&start=<?= date('Y-m-01') ?>&end=<?= date('Y-m-d') ?>" class="stat-box-link">
@@ -422,8 +421,8 @@ $status_priority = ['in_progress' => 0, 'approved' => 1, 'completed' => 2];
                                 <table id="todayScheduleTable" style="width:100%; font-size:0.85rem; border-collapse:collapse;">
                                     <thead>
                                         <tr>
-                                            <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6;">Pickup Time</th>
-                                            <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6;">Dropoff Time</th>
+                                            <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6;">Departure</th>
+                                            <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6;">Arrival</th>
                                             <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6;">Car</th>
                                             <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6;">Driver</th>
                                             <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6;">Requestor</th>

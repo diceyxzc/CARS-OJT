@@ -682,8 +682,8 @@ $export_pdf_query = http_build_query($export_pdf_params);
                                     <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Request #</th>
                                     <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Status</th>
                                     <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Date</th>
-                                    <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Pickup Time</th>
-                                    <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Dropoff Time</th>
+                                    <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Departure</th>
+                                    <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Arrival</th>
                                     <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Car</th>
                                     <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Driver</th>
                                     <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Pickup</th>
@@ -718,7 +718,7 @@ $export_pdf_query = http_build_query($export_pdf_params);
                                 <tr data-date="<?= $raw_date ?>" class="trip-row-clickable" style="border-left: 3px solid <?= $sc['border'] ?>; cursor:pointer;" onclick="openTripModal(<?= htmlspecialchars(json_encode($t)) ?>)">
                                     <td style="padding:6px 10px; border-bottom:1px solid #f1f3f5;"><strong><?= htmlspecialchars($t['request_number'] ?? '') ?></strong></td>
                                     <td data-order="<?= $status_priority[$t['status']] ?? 99 ?>"
-                                        data-search="<?= htmlspecialchars($t['status'] . ' ' . ($status_labels[$t['status']] ?? ucfirst($t['status']))) ?>"
+                                        data-filter="<?= htmlspecialchars($t['status'] . ' ' . ($status_labels[$t['status']] ?? ucfirst($t['status']))) ?>"
                                         style="padding:6px 10px; border-bottom:1px solid #f1f3f5;">
                                         <span style="display:inline-block; padding:3px 10px; border-radius:12px; font-size:0.72rem; font-weight:600; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap; background:<?= $sc['bg'] ?>; color:<?= $sc['text'] ?>;">
                                             <?= $status_labels[$t['status']] ?? ucfirst($t['status']) ?>
@@ -974,10 +974,9 @@ $export_pdf_query = http_build_query($export_pdf_params);
             outgoingTripsTable = $('#outgoingTripsTable').DataTable({
                 pageLength: 10,
                 lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-                // In Progress -> Approved -> Completed -> Cancelled (data-order on the Status cell),
-                // then most recent date first within each status group.
                 order: [[1, 'asc'], [2, 'asc']],
                 columnDefs: [
+                    { targets: 1, type: 'string' },
                     { orderable: false, targets: [4, 5, 9] }
                 ],
                 language: {
