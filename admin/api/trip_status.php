@@ -24,7 +24,7 @@ try {
             (SELECT COUNT(*) FROM tbl_allocations 
                 WHERE status IN ('in_progress', 'completed') AND date = CURDATE()) as in_progress_today,
             (SELECT COUNT(*) FROM tbl_allocations 
-                WHERE status IN ('approved') AND date = CURDATE()) as approved_today,
+                WHERE status IN ('approved') as approved_today,
             (SELECT COUNT(*) FROM tbl_allocations 
                 WHERE status = 'completed' AND date = CURDATE()) as completed_today,
 

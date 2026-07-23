@@ -694,7 +694,6 @@ foreach ($trips as $trip) {
                 </div>
                 
                 <div class="footer">
-                    <div class="stats">${tripCount}</div>
                     <div>CARS System | ${new Date().toLocaleDateString()}</div>
                 </div>
                 

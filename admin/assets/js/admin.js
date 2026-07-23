@@ -92,13 +92,13 @@ function openTripModal(trip) {
             <span class="value" style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
                 <div>
                     <div style="font-size:0.65rem; color:#6c757d; text-transform:uppercase; letter-spacing:0.3px; margin-bottom:4px; font-weight:600;">Scheduled</div>
-                    <div style="margin-bottom:2px;"><span style="color:#6c757d; font-size:0.75rem;">Pickup:</span> ${new Date('2000-01-01 ' + trip.pickup_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</div>
-                    <div><span style="color:#6c757d; font-size:0.75rem;">Dropoff:</span> ${trip.dropoff_time ? new Date('2000-01-01 ' + trip.dropoff_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : 'Not specified'}</div>
+                    <div style="margin-bottom:2px;"><span style="color:#6c757d; font-size:0.75rem;">Departure:</span> ${new Date('2000-01-01 ' + trip.pickup_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</div>
+                    <div><span style="color:#6c757d; font-size:0.75rem;">Arrival:</span> ${trip.dropoff_time ? new Date('2000-01-01 ' + trip.dropoff_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : 'Not specified'}</div>
                 </div>
                 <div>
                     <div style="font-size:0.65rem; color:#2e7d32; text-transform:uppercase; letter-spacing:0.3px; margin-bottom:4px; font-weight:600;">Actual</div>
-                    <div style="margin-bottom:2px;"><span style="color:#6c757d; font-size:0.75rem;">Pickup:</span> ${trip.actual_pickup_time ? new Date('2000-01-01 ' + trip.actual_pickup_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '<span style="color:#adb5bd;">Not yet</span>'}</div>
-                    <div><span style="color:#6c757d; font-size:0.75rem;">Dropoff:</span> ${trip.actual_dropoff_time ? new Date('2000-01-01 ' + trip.actual_dropoff_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '<span style="color:#adb5bd;">Not yet</span>'}</div>
+                    <div style="margin-bottom:2px;"><span style="color:#6c757d; font-size:0.75rem;">Departure:</span> ${trip.actual_pickup_time ? new Date('2000-01-01 ' + trip.actual_pickup_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '<span style="color:#adb5bd;">Not yet</span>'}</div>
+                    <div><span style="color:#6c757d; font-size:0.75rem;">Arrival:</span> ${trip.actual_dropoff_time ? new Date('2000-01-01 ' + trip.actual_dropoff_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '<span style="color:#adb5bd;">Not yet</span>'}</div>
                 </div>
             </span>
         </div>

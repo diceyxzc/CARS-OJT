@@ -560,7 +560,10 @@ $outgoing_stmt = $pdo->prepare("
     SELECT a.*, a.request_number,
            c.brand, c.plate_number, 
            d.name as driver_name, d.mobile as driver_mobile,
-           COALESCE(u.full_name, u.username) as requestor
+           COALESCE(u.full_name, u.username) as requestor,
+           CASE WHEN a.remarks LIKE '%Purpose:%'
+                THEN TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(a.remarks, 'Purpose:', -1), '|', 1))
+                ELSE NULL END as purpose
     FROM tbl_allocations a 
     JOIN tbl_cars c ON a.car_id = c.car_id 
     JOIN tbl_drivers d ON a.driver_id = d.driver_id 
@@ -613,6 +616,9 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 1 && isset($_GET['tab']) && $_GET['
                c.brand, c.plate_number, 
                d.name as driver_name, d.mobile as driver_mobile,
                COALESCE(u.full_name, u.username) as requestor
+               CASE WHEN a.remarks LIKE '%Purpose:%'
+                THEN TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(a.remarks, 'Purpose:', -1), '|', 1))
+                ELSE NULL END as purpose
         FROM tbl_allocations a 
         JOIN tbl_cars c ON a.car_id = c.car_id 
         JOIN tbl_drivers d ON a.driver_id = d.driver_id 
@@ -1645,7 +1651,6 @@ function getAvailableDrivers($pdo, $date, $pickup_time, $dropoff_time = null) {
             border: 1px solid #ef9a9a;
             border-radius: 4px;
         }
-
         .passenger-error-message.show {
             display: block;
         }
@@ -1707,11 +1712,11 @@ function getAvailableDrivers($pdo, $date, $pickup_time, $dropoff_time = null) {
                     <strong>Car:</strong> <span id="completeInprogressCar">-</span><br>
                     <strong>Driver:</strong> <span id="completeInprogressDriver">-</span><br>
                     <strong>Date:</strong> <span id="completeInprogressDate">-</span><br>
-                    <strong>Actual Pickup Time:</strong> <span id="completeInprogressPickup">-</span>
+                    <strong>Actual Departure:</strong> <span id="completeInprogressPickup">-</span>
                 </div>
                 <div class="form-group floating-group" style="margin-top:12px;">
                     <input type="time" class="form-control-modern" placeholder=" " id="completeInprogressActualTime" required>
-                    <label for="completeInprogressActualTime">Actual Dropoff Time <span class="required">*</span></label>
+                    <label for="completeInprogressActualTime">Actual Arrival<span class="required">*</span></label>
                 </div>
                 <div class="modal-buttons">
                     <button type="button" class="btn btn-cancel" onclick="closeCompleteInprogressModal()">Cancel</button>
@@ -1732,11 +1737,11 @@ function getAvailableDrivers($pdo, $date, $pickup_time, $dropoff_time = null) {
                     <strong>Requestor:</strong> <span id="startTripRequestor">-</span><br>
                     <strong>Car:</strong> <span id="startTripCar">-</span><br>
                     <strong>Driver:</strong> <span id="startTripDriver">-</span><br>
-                    <strong>Scheduled Pickup:</strong> <span id="startTripPickup">-</span>
+                    <strong>Scheduled Departure:</strong> <span id="startTripPickup">-</span>
                 </div>
                 <div class="form-group floating-group" style="margin-top:12px;">
                     <input type="time" class="form-control-modern" placeholder=" " id="startTripActualTime" required>
-                    <label for="startTripActualTime">Actual Pickup Time <span class="required">*</span></label>
+                    <label for="startTripActualTime">Actual Departure <span class="required">*</span></label>
                 </div>
                 <div class="modal-buttons">
                     <button type="button" class="btn btn-cancel" onclick="closeStartTripModal()">Cancel</button>
@@ -1759,7 +1764,7 @@ function getAvailableDrivers($pdo, $date, $pickup_time, $dropoff_time = null) {
                     <strong>Car:</strong> <span id="cancelCar">-</span><br>
                     <strong>Driver:</strong> <span id="cancelDriver">-</span><br>
                     <strong>Date:</strong> <span id="cancelDate">-</span><br>
-                    <strong>Pickup Time:</strong> <span id="cancelPickup">-</span>
+                    <strong>Departure:</strong> <span id="cancelPickup">-</span>
                 </div>
                 <div class="modal-buttons">
                     <button type="button" class="btn btn-cancel" onclick="closeCancelModal()">Go Back</button>
@@ -1798,19 +1803,19 @@ function getAvailableDrivers($pdo, $date, $pickup_time, $dropoff_time = null) {
                         <span class="value" id="approveDate">-</span>
                     </div>
                     <div class="row">
-                        <span class="label">Pickup Time</span>
+                        <span class="label">Departure</span>
                         <span class="value" id="approvePickupTime">-</span>
                     </div>
                     <div class="row">
-                        <span class="label">Dropoff Time</span>
+                        <span class="label">Arrival</span>
                         <span class="value" id="approveDropoffTime">-</span>
                     </div>
                     <div class="row">
-                        <span class="label">Pickup</span>
+                        <span class="label">Departure</span>
                         <span class="value" id="approvePickup">-</span>
                     </div>
                     <div class="row">
-                        <span class="label">Dropoff</span>
+                        <span class="label">Arrival</span>
                         <span class="value" id="approveDropoff">-</span>
                     </div>
                     <div class="row">
@@ -1953,8 +1958,8 @@ function getAvailableDrivers($pdo, $date, $pickup_time, $dropoff_time = null) {
                 
                 <div class="trip-summary-box" id="confirmTripSummary">
                     <div class="row"><span class="label">Date:</span><span class="value" id="confirmDate">-</span></div>
-                    <div class="row"><span class="label">Pickup Time:</span><span class="value" id="confirmPickupTime">-</span></div>
-                    <div class="row"><span class="label">Dropoff Time:</span><span class="value" id="confirmDropoffTime">-</span></div>
+                    <div class="row"><span class="label">Departure:</span><span class="value" id="confirmPickupTime">-</span></div>
+                    <div class="row"><span class="label">Arrival:</span><span class="value" id="confirmDropoffTime">-</span></div>
                     <div class="row"><span class="label">Driver:</span><span class="value" id="confirmDriver">-</span></div>
                     <div class="row"><span class="label">Car:</span><span class="value" id="confirmCar">-</span></div>
                     <div class="row"><span class="label">Parking:</span><span class="value" id="confirmParking">-</span></div>
@@ -2036,6 +2041,7 @@ function getAvailableDrivers($pdo, $date, $pickup_time, $dropoff_time = null) {
                                 <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-size:0.75rem; text-transform:uppercase; color:#6c757d;">Route</th>
                                 <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-size:0.75rem; text-transform:uppercase; color:#6c757d;">Passengers</th>
                                 <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-size:0.75rem; text-transform:uppercase; color:#6c757d;">Status</th>
+                                <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-size:0.75rem; text-transform:uppercase; color:#6c757d;">Remarks</th>
                                 <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-size:0.75rem; text-transform:uppercase; color:#6c757d;">Action</th>
                             </tr>
                         </thead>
@@ -2092,8 +2098,8 @@ function getAvailableDrivers($pdo, $date, $pickup_time, $dropoff_time = null) {
                                     <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Requestor</th>
                                     <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Local Number</th>
                                     <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Date</th>
-                                    <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Pickup Time</th>
-                                    <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Dropoff Time</th>
+                                    <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Departure</th>
+                                    <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Arrival</th>
                                     <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Location</th>
                                     <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Remarks</th>
                                     <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Passengers</th>
@@ -2247,12 +2253,12 @@ function getAvailableDrivers($pdo, $date, $pickup_time, $dropoff_time = null) {
                     <div class="form-row-2">
                         <div class="form-group floating-group">
                             <input type="time" class="form-control-modern" placeholder=" " name="pickup_time" id="pickup_time" required>
-                            <label for="pickup_time">Pickup Time <span class="required">*</span></label>
+                            <label for="pickup_time">Departure <span class="required">*</span></label>
                         </div>
                         <div class="form-group floating-group">
                             <input type="time" class="form-control-modern" placeholder=" " name="dropoff_time" id="dropoff_time" required>
-                            <label for="dropoff_time">Dropoff Time <span class="required">*</span></label>
-                            <div class="dropoff-error-message" id="dropoffError">Dropoff time must be after pickup time</div>
+                            <label for="dropoff_time">Arrival <span class="required">*</span></label>
+                            <div class="dropoff-error-message" id="dropoffError">Arrival time must be after pickup time</div>
                         </div>
                     </div>
 
