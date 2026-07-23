@@ -75,11 +75,12 @@ foreach ($trips as $trip) {
 <head>
     <title>Driver Weekly Schedule</title>
     <link rel="stylesheet" href="../assets/css/style.css"> 
-    <link rel="stylesheet" href="../pages/driver/driver.css"> 
+    <link rel="stylesheet" href="../pages/driver/driver.css">
+    <link rel="icon" type="image/png" href="../assets/img/logo.png">
     <style>
         /* Print button style */
         .btn-print {
-            background: #28a745;
+            background: #1921c3;
             color: white;
             border: none;
             padding: 8px 20px;
@@ -88,7 +89,7 @@ foreach ($trips as $trip) {
             font-weight: bold;
         }
         .btn-print:hover {
-            background: #218838;
+            background: #3942ee;
         }
         .week-nav {
             display: flex;

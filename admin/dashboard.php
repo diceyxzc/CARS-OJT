@@ -192,6 +192,29 @@ function buildDriverWeekPayload($driver_id, $driver_name, $driver_mobile, $week_
     ], extractDriverMeta($days));
 }
 
+function buildDriverDayPayload($driver_id, $driver_name, $driver_mobile, $date, $source_trips) {
+    $day_trips = array_values(array_filter($source_trips, function ($t) use ($driver_id, $date) {
+        return $t['driver_id'] == $driver_id && $t['date'] == $date;
+    }));
+    usort($day_trips, function ($a, $b) {
+        $pa = tripStatusPriority($a['status']);
+        $pb = tripStatusPriority($b['status']);
+        if ($pa !== $pb) return $pa <=> $pb;
+        return strtotime($a['pickup_time']) <=> strtotime($b['pickup_time']);
+    });
+    $days = [[
+        'date' => $date,
+        'display' => date('D, M j', strtotime($date)),
+        'trips' => $day_trips
+    ]];
+    return array_merge([
+        'driver_id' => $driver_id,
+        'driver_name' => $driver_name,
+        'driver_mobile' => $driver_mobile,
+        'days' => $days
+    ], extractDriverMeta($days));
+}
+
 // Group this week's trips by driver, per date
 $active_drivers_by_date_weekly = groupActiveDriversByDate($weekly_schedule);
 
@@ -235,6 +258,7 @@ $status_priority = ['in_progress' => 0, 'approved' => 1, 'completed' => 2];
     <title>Admin Dashboard - CARS</title>
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="../admin/assets/css/admin.css">
+    <link rel="icon" type="image/png" href="../assets/img/logo.png">
     <link href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" rel="stylesheet">
 </head>
 <body>
@@ -330,7 +354,7 @@ $status_priority = ['in_progress' => 0, 'approved' => 1, 'completed' => 2];
                     <div class="label" style="color: #6a1b9a;">Approved Trips</div>
                 </div>
             </a>
-            <a href="reports.php?type=trips&start=<?= date('Y-m-01') ?>&end=<?= date('Y-m-d') ?>" class="stat-box-link">
+            <a href="reports.php?type=trips&filter_status=completed&start=<?= date('Y-m-01') ?>&end=<?= date('Y-m-d') ?>" class="stat-box-link">
                 <div class="stat-box" style="border-left-color: #2e7d32;">
                     <div class="number" style="color: #2e7d32;" id="statTotal"><?= $total_trips_month_count ?></div>
                     <div class="label" style="color: #2e7d32;">Total Trips Completed</div>
@@ -406,8 +430,8 @@ $status_priority = ['in_progress' => 0, 'approved' => 1, 'completed' => 2];
         </div>
 
         <div class="view-toggle">
-            <a href="?view=daily" class="<?= $view_type == 'daily' ? 'active' : '' ?>" id="viewDaily">Daily View</a>
-            <a href="?view=weekly" class="<?= $view_type == 'weekly' ? 'active' : '' ?>" id="viewWeekly">Weekly View</a>
+            <a href="#" class="<?= $view_type == 'daily' ? 'active' : '' ?>" id="viewDaily" onclick="switchView('daily'); return false;">Daily View</a>
+            <a href="#" class="<?= $view_type == 'weekly' ? 'active' : '' ?>" id="viewWeekly" onclick="switchView('weekly'); return false;">Weekly View</a>
         </div>
 
         <div class="dashboard-grid">
@@ -479,8 +503,8 @@ $status_priority = ['in_progress' => 0, 'approved' => 1, 'completed' => 2];
                                 <?php if ($driver_count > 0): ?>
                                     <?php foreach ($drivers_today as $driver): ?>
                                         <?php 
-                                        $payload = buildDriverWeekPayload($driver['driver_id'], $driver['driver_name'], $driver['driver_mobile'], $week_start, $weekly_schedule);
-                                        $payload['label'] = 'Weekly Schedule';
+                                        $payload = buildDriverDayPayload($driver['driver_id'], $driver['driver_name'], $driver['driver_mobile'], $day_date, $weekly_schedule);
+                                        $payload['label'] = 'Today Schedule';
                                         ?>
                                         <div class="admin-driver-mini" onclick="openDriverModal(<?= htmlspecialchars(json_encode($payload)) ?>)">
                                             <span class="driver-status-dot active"></span>
@@ -710,6 +734,30 @@ $status_priority = ['in_progress' => 0, 'approved' => 1, 'completed' => 2];
             }
         }
     });
+
+    function switchView(view) {
+        var daily = document.getElementById('dailyView');
+        var weekly = document.getElementById('weeklyView');
+        var dailyLink = document.getElementById('viewDaily');
+        var weeklyLink = document.getElementById('viewWeekly');
+
+        if (view === 'daily') {
+            daily.style.display = '';
+            weekly.style.display = 'none';
+            dailyLink.classList.add('active');
+            weeklyLink.classList.remove('active');
+        } else {
+            daily.style.display = 'none';
+            weekly.style.display = '';
+            weeklyLink.classList.add('active');
+            dailyLink.classList.remove('active');
+        }
+
+        // Keep the URL in sync without reloading, so refresh/back-button still work
+        var url = new URL(window.location);
+        url.searchParams.set('view', view);
+        window.history.replaceState({}, '', url);
+    }
 
     document.addEventListener('DOMContentLoaded', function() {
         initPagination('carsInUseContainer', 8);

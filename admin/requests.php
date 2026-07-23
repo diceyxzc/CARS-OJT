@@ -615,7 +615,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 1 && isset($_GET['tab']) && $_GET['
         SELECT a.*, a.request_number,
                c.brand, c.plate_number, 
                d.name as driver_name, d.mobile as driver_mobile,
-               COALESCE(u.full_name, u.username) as requestor
+               COALESCE(u.full_name, u.username) as requestor,
                CASE WHEN a.remarks LIKE '%Purpose:%'
                 THEN TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(a.remarks, 'Purpose:', -1), '|', 1))
                 ELSE NULL END as purpose
@@ -1340,6 +1340,7 @@ function getAvailableDrivers($pdo, $date, $pickup_time, $dropoff_time = null) {
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="../admin/assets/css/admin.css">
     <link rel="stylesheet" href="../admin/assets/css/admin-requests.css">
+    <link rel="icon" type="image/png" href="../assets/img/logo.png">
     <link href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>

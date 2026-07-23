@@ -246,6 +246,7 @@ $all_cars_dropdown = $pdo->query("
     <title>Drivers - CARS</title>
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="../admin/assets/css/admin.css">
+    <link rel="icon" type="image/png" href="../assets/img/logo.png">
     <link href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" rel="stylesheet">
 </head>
 <body>

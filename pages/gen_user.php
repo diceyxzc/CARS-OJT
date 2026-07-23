@@ -203,6 +203,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_request'])) {
     <title>Request Car - CARS</title>
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="../pages/user/user.css">
+    <link rel="icon" type="image/png" href="../assets/img/logo.png">
     <style>
         /* Modal Overlay - FIXED POSITIONING */
         .modal-overlay {

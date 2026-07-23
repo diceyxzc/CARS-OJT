@@ -9,6 +9,11 @@ require_admin();
 $start_date = $_GET['start'] ?? date('Y-m-01');
 $end_date = $_GET['end'] ?? date('Y-m-d');
 $report_type = $_GET['type'] ?? 'trips';
+$valid_filter_statuses = ['pending', 'approved', 'in_progress', 'completed', 'cancelled'];
+$filter_status = $_GET['filter_status'] ?? '';
+if (!in_array($filter_status, $valid_filter_statuses)) {
+    $filter_status = '';
+}
 
 // Canonical status ordering used everywhere in this report: In Progress -> Approved -> Completed -> Cancelled
 $status_priority = [
@@ -98,7 +103,7 @@ $in_progress = 0;
 $cancelled = 0;
 
 if ($report_type == 'trips') {
-   $report = $pdo->query("
+    $trips_sql = "
         SELECT a.*, a.request_number, c.brand, c.plate_number, c.parking, 
                d.name as driver_name, d.mobile as driver_mobile, 
                COALESCE(u.full_name, u.username) as requestor,
@@ -112,9 +117,16 @@ if ($report_type == 'trips') {
         JOIN tbl_cars c ON a.car_id = c.car_id 
         JOIN tbl_drivers d ON a.driver_id = d.driver_id 
         JOIN tbl_users u ON a.requestor_id = u.user_id 
-        WHERE a.status IN ('approved', 'completed', 'in_progress', 'cancelled')
-        ORDER BY " . statusOrderSql('a.status') . ", a.date DESC
-    ");
+        WHERE a.status IN ('approved', 'completed', 'in_progress', 'cancelled')";
+    $trips_params = [];
+    if ($filter_status !== '') {
+        $trips_sql .= " AND a.status = ?";
+        $trips_params[] = $filter_status;
+    }
+    $trips_sql .= " ORDER BY " . statusOrderSql('a.status') . ", a.date DESC";
+
+    $report = $pdo->prepare($trips_sql);
+    $report->execute($trips_params);
     $report_data = $report->fetchAll();
 
     $total_trips = count($report_data);
@@ -455,6 +467,11 @@ if (isset($_GET['export_pdf'])) {
                     $sc = $status_colors[$r['status']] ?? ['bg' => '#f1f3f5', 'text' => '#495057'];
                     $ap = getActualTimeInfo($r['actual_pickup_time'] ?? null, $r['pickup_time'], 'Not started');
                     $ad = getActualTimeInfo($r['actual_dropoff_time'] ?? null, $r['dropoff_time'], 'Not completed');
+
+                    if ($r['status'] === 'cancelled') {
+                        if ($ap['status'] === 'none') $ap = ['text' => 'Cancelled', 'status' => 'none'];
+                        if ($ad['status'] === 'none') $ad = ['text' => 'Cancelled', 'status' => 'none'];
+                    }
                 ?>
                     <tr>
                         <td><?= htmlspecialchars($r['request_number'] ?? '') ?></td>
@@ -547,6 +564,7 @@ $export_pdf_query = http_build_query($export_pdf_params);
     <title>Reports - CARS</title>
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="../admin/assets/css/admin.css">
+    <link rel="icon" type="image/png" href="../assets/img/logo.png">
     <link href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" rel="stylesheet">
 </head>
 <body>
@@ -598,6 +616,7 @@ $export_pdf_query = http_build_query($export_pdf_params);
         <div class="report-section">
             <form method="GET" style="display:flex; gap:15px; align-items:end; flex-wrap:wrap;">
                 <input type="hidden" name="type" value="<?= htmlspecialchars($report_type) ?>">
+                <input type="hidden" name="filter_status" value="<?= htmlspecialchars($filter_status) ?>">
                 <div class="form-group" style="margin-bottom:0;">
                     <label style="font-size:0.8rem; color:#6c757d; font-weight:500;">From:</label>
                     <input type="date" name="start" id="exportStartDate" value="<?= htmlspecialchars($start_date) ?>" class="form-control" style="padding:8px 12px; width:auto; border:2px solid #e9ecef; border-radius:6px;">
@@ -626,6 +645,13 @@ $export_pdf_query = http_build_query($export_pdf_params);
             <?php if ($report_type == 'trips' && count($selected_statuses) < count($exportable_statuses)): ?>
                 <div style="font-size:0.75rem; color:#6c757d; margin-top:6px;">
                     Filtered to: <?= implode(', ', array_map(function($s) use ($status_labels) { return $status_labels[$s]; }, $selected_statuses)) ?>
+                </div>
+            <?php endif; ?>
+
+            <?php if ($report_type == 'trips' && $filter_status !== ''): ?>
+                <div style="background:#e8eaf6; border:1px solid #c5cae9; border-radius:6px; padding:8px 14px; margin-top:10px; font-size:0.85rem; display:flex; align-items:center; gap:10px;">
+                    <span>Showing only: <strong><?= htmlspecialchars($status_labels[$filter_status]) ?></strong> trips</span>
+                    <a href="?type=trips&start=<?= urlencode($start_date) ?>&end=<?= urlencode($end_date) ?>" style="color:#1a237e; font-weight:600; text-decoration:none;">✕ Clear filter</a>
                 </div>
             <?php endif; ?>
 
@@ -679,15 +705,14 @@ $export_pdf_query = http_build_query($export_pdf_params);
                         <table id="outgoingTripsTable" style="width:100%; font-size:0.85rem; border-collapse:collapse;">
                             <thead>
                                 <tr>
-                                    <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Request #</th>
+                                    <th style="text-align:center; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d; width:170px;">Request #</th>
                                     <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Status</th>
-                                    <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Date</th>
-                                    <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Departure</th>
-                                    <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Arrival</th>
+                                    <th style="text-align:center; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d; width:100px;">Date</th>
+                                    <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d; width:90px;">Departure</th>
+                                    <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d; width:70px;">Arrival</th>
                                     <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Car</th>
                                     <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Driver</th>
-                                    <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Pickup</th>
-                                    <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Dropoff</th>
+                                    <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Route</th>
                                     <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Passengers</th>
                                 </tr>
                             </thead>
@@ -705,9 +730,10 @@ $export_pdf_query = http_build_query($export_pdf_params);
                                     $sc = $status_colors[$t['status']] ?? ['bg' => '#f1f3f5', 'text' => '#495057', 'border' => '#6c757d'];
                                     $raw_date = date('Y-m-d', strtotime($t['date']));
 
-                                    $actual_pickup = getActualTimeInfo($t['actual_pickup_time'] ?? null, $t['pickup_time'], 'Not started');
-                                    $actual_dropoff = getActualTimeInfo($t['actual_dropoff_time'] ?? null, $t['dropoff_time'], 'Not completed');
-                                    if ($t['status'] === 'cancelled') {
+                                    $actual_pickup = getActualTimeInfo($r['actual_pickup_time'] ?? null, $r['pickup_time'], 'Not started');
+                                    $actual_dropoff = getActualTimeInfo($r['actual_dropoff_time'] ?? null, $r['dropoff_time'], 'Not completed');
+
+                                    if ($r['status'] === 'cancelled') {
                                         if ($actual_pickup['status'] === 'none') $actual_pickup = ['text' => 'Cancelled', 'status' => 'none'];
                                         if ($actual_dropoff['status'] === 'none') $actual_dropoff = ['text' => 'Cancelled', 'status' => 'none'];
                                     }
@@ -716,7 +742,7 @@ $export_pdf_query = http_build_query($export_pdf_params);
                                 $t['passengers'] = $trip_passengers;
                                 ?>
                                 <tr data-date="<?= $raw_date ?>" class="trip-row-clickable" style="border-left: 3px solid <?= $sc['border'] ?>; cursor:pointer;" onclick="openTripModal(<?= htmlspecialchars(json_encode($t)) ?>)">
-                                    <td style="padding:6px 10px; border-bottom:1px solid #f1f3f5;"><strong><?= htmlspecialchars($t['request_number'] ?? '') ?></strong></td>
+                                    <td style="text-align: center; padding:6px 10px; border-bottom:1px solid #f1f3f5;"><strong><?= htmlspecialchars($t['request_number'] ?? '') ?></strong></td>
                                     <td data-order="<?= $status_priority[$t['status']] ?? 99 ?>"
                                         data-filter="<?= htmlspecialchars($t['status'] . ' ' . ($status_labels[$t['status']] ?? ucfirst($t['status']))) ?>"
                                         style="padding:6px 10px; border-bottom:1px solid #f1f3f5;">
@@ -724,7 +750,7 @@ $export_pdf_query = http_build_query($export_pdf_params);
                                             <?= $status_labels[$t['status']] ?? ucfirst($t['status']) ?>
                                         </span>
                                     </td>
-                                    <td data-order="<?= $raw_date ?>" style="padding:6px 10px; border-bottom:1px solid #f1f3f5;"><?= date('M d, Y', strtotime($t['date'])) ?></td>
+                                    <td data-order="<?= $raw_date ?>" style="text-align: center; padding:6px 10px; border-bottom:1px solid #f1f3f5;"><?= date('M d, Y', strtotime($t['date'])) ?></td>
                                     <td style="padding:6px 10px; border-bottom:1px solid #f1f3f5;">
                                         <?= date('g:i A', strtotime($t['pickup_time'])) ?>
                                         <br>
@@ -745,8 +771,11 @@ $export_pdf_query = http_build_query($export_pdf_params);
                                         <span class="text-muted" style="font-size:0.65rem;"><?= htmlspecialchars($t['plate_number']) ?></span>
                                     </td>
                                     <td style="padding:6px 10px; border-bottom:1px solid #f1f3f5;"><?= htmlspecialchars($t['driver_name']) ?></td>
-                                    <td style="padding:6px 10px; border-bottom:1px solid #f1f3f5;"><?= htmlspecialchars($t['pickup_location']) ?></td>
-                                    <td style="padding:6px 10px; border-bottom:1px solid #f1f3f5;"><?= htmlspecialchars($t['dropoff_location'] ?? '-') ?></td>
+                                    <td style="padding:6px 10px; border-bottom:1px solid #f1f3f5;">
+                                        <?= htmlspecialchars($t['pickup_location']) ?>
+                                        <span style="color:#adb5bd;"> → </span>
+                                        <?= htmlspecialchars($t['dropoff_location'] ?? '-') ?>
+                                    </td>
                                     <td style="padding:6px 10px; border-bottom:1px solid #f1f3f5;">
                                         <?php if (!empty($trip_passengers)): ?>
                                             <?php foreach($trip_passengers as $p): ?>
@@ -977,7 +1006,8 @@ $export_pdf_query = http_build_query($export_pdf_params);
                 order: [[1, 'asc'], [2, 'asc']],
                 columnDefs: [
                     { targets: 1, type: 'string' },
-                    { orderable: false, targets: [4, 5, 9] }
+                    { orderable: false, targets: [4, 5, 8] },
+                    { searchable: false, targets: [3, 4] }
                 ],
                 language: {
                     search: "Search:",
@@ -1007,6 +1037,12 @@ $export_pdf_query = http_build_query($export_pdf_params);
             $('#clearDateFilter').on('click', function() {
                 $('#tripDateFilter').val('');
                 outgoingTripsTable.draw();
+            });
+
+            $('#outgoingTripsTable_filter input').on('input', function() {
+                if ($('#tripDateFilter').val()) {
+                    $('#tripDateFilter').val('');
+                }
             });
         }
 
@@ -1072,6 +1108,15 @@ $export_pdf_query = http_build_query($export_pdf_params);
     </script>
 
     <style>
+    .dt-custom-reports table.dataTable tbody tr:nth-child(odd) {
+        background: #ffffff;
+    }
+    .dt-custom-reports table.dataTable tbody tr:nth-child(even) {
+        background: #f7f7f9;
+    }
+    .dt-custom-reports table.dataTable tbody tr:hover {
+        background: #f8f9ff !important;
+    }
     .dt-custom-reports .dataTables_length,
     .dt-custom-reports .dataTables_filter {
         margin-bottom: 10px;

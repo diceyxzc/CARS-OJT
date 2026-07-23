@@ -1,4 +1,4 @@
 <?php
-header('Location: gen_user.php');
+header('Location: pages/gen_user.php');
 exit();
 ?>

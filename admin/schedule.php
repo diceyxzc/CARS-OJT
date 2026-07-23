@@ -325,6 +325,7 @@ if ($view_type == 'monthly') {
     <title>Schedule - CARS</title>
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="../admin/assets/css/admin.css">
+    <link rel="icon" type="image/png" href="../assets/img/logo.png">
     <style>
         /* Custom styles for navigation buttons */
         .week-nav .btn-outline {
