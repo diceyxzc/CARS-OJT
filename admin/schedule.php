@@ -771,6 +771,7 @@ if ($view_type == 'monthly') {
                 <a href="schedule.php" class="active">Schedule</a>
                 <a href="driver_vehicle.php">Drivers & Vehicles</a>
                 <a href="reports.php">Reports</a>
+                <a href="../pages/gen_driver.php" target="_blank">Driver Schedule</a>
                 <a href="#" onclick="openLogoutModal(); return false;">Logout</a>
             </div>
         </div>

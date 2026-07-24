@@ -263,6 +263,7 @@ $all_cars_dropdown = $pdo->query("
                 <a href="schedule.php">Schedule</a>
                 <a href="driver_vehicle.php" class="active">Drivers & Vehicles</a>
                 <a href="reports.php">Reports</a>
+                <a href="../pages/gen_driver.php" target="_blank">Driver Schedule</a>
                 <a href="#" onclick="openLogoutModal(); return false;">Logout</a>
             </div>
         </div>
