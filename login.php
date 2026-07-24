@@ -55,13 +55,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CARS - Car Allocation Reservation System</title>
-    <link rel="stylesheet" href="../assets/css/style.css">
-    <link rel="icon" type="image/png" href="../assets/img/logo.png">
+    <link rel="stylesheet" href="/CARS/assets/css/style.css">
+    <link rel="icon" type="image/png" href="/CARS/assets/img/logo.png">
 </head>
 <body class="login-page">
     <div class="login-container">
     <div class="logo">
-        <img src="../assets/img/logo.png" alt="CARS Logo" style="width:80px; height:80px;">
+        <img src="/CARS/assets/img/logo.png" alt="CARS Logo" style="width:80px; height:80px;">
         <h1>CARS</h1>
         <p style="color:var(--gray); font-size:0.85rem;">Car Allocation Reservation System</p>
     </div>
@@ -85,6 +85,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <button type="submit" class="btn btn-primary btn-block btn-lg">Sign In</button>
         </form>
     </div>
-    <script src="../assets/js/script.js"></script>
+    <script src="/CARS/assets/js/script.js"></script>
 </body>
 </html>

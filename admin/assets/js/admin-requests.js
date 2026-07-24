@@ -152,7 +152,7 @@ function filterAvailableDrivers() {
   }
 
   fetch(
-    "/admin/api/available_drivers.php?date=" +
+    "api/available_drivers.php?date=" +
       encodeURIComponent(date) +
       "&pickup=" +
       encodeURIComponent(pickupTime) +
@@ -1718,7 +1718,7 @@ function checkRangeConflicts(
   onComplete,
 ) {
   var url =
-    "/admin/api/check_range_conflicts.php?driver_id=" +
+    "api/check_range_conflicts.php?driver_id=" +
     encodeURIComponent(driverId) +
     "&start_date=" +
     encodeURIComponent(startDate) +
