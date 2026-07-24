@@ -32,23 +32,3 @@ function require_admin_api() {
         exit();
     }
 }
-
-/**
- * Single source of truth for "where does this role land after login".
- * Used by login.php (both the "already logged in" redirect and the
- * "just logged in" redirect) so there is only one place to update
- * if a role's landing page ever changes.
- */
-function redirect_by_role($role) {
-    switch ($role) {
-        case 'admin':
-            header('Location: admin/dashboard.php');
-            break;
-        case 'driver':
-            header('Location: driver/dashboard.php');
-            break;
-        default:
-            header('Location: user/dashboard.php');
-    }
-    exit();
-}

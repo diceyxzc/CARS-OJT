@@ -219,7 +219,6 @@ foreach ($today_trips as $key => $t) {
                                     <?= date('g:i A', strtotime($t['pickup_time'])) ?>
                                     <?= $t['dropoff_time'] ? ' – ' . date('g:i A', strtotime($t['dropoff_time'])) : '' ?>
                                     &middot; <?= htmlspecialchars($t['pickup_location']) ?><?= !empty($t['dropoff_location']) ? ' → ' . htmlspecialchars($t['dropoff_location']) : '' ?>
-                                    &middot; Requested by <?= htmlspecialchars($t['requestor']) ?>
                                 </div>
                                 <?php if ($t['status'] === 'approved' && !$t['startability']['startable']): ?>
                                     <div class="trip-blocked-reason"><?= htmlspecialchars($t['startability']['reason']) ?></div>

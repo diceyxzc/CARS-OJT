@@ -1,0 +1,10 @@
+# Vendor / dependency folders
+vendor/
+node_modules/
+
+# Composer lock file (optional — many teams DO commit this, see note below)
+# composer.lock
+
+# Common local/config files worth ignoring too
+.env
+*.log

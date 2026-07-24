@@ -828,8 +828,7 @@ if ($view_type == 'monthly') {
                 </div>
                 <form method="GET" class="date-picker-form">
                     <input type="hidden" name="view" value="daily">
-                    <input type="date" name="date" value="<?= $filter_date ?>">
-                    <button type="submit" class="btn-view">View</button>
+                    <input type="date" name="date" value="<?= $filter_date ?>" onchange="this.form.submit()">
                 </form>
                 <span class="week-label"><?= date('l, F j, Y', strtotime($filter_date)) ?></span>
             </div>

@@ -112,7 +112,6 @@ function refreshTripList() {
                 if (t.dropoff_time) html += ' – ' + formatTripTime(t.dropoff_time);
                 html += ' &middot; ' + escapeHtml(t.pickup_location);
                 if (t.dropoff_location) html += ' → ' + escapeHtml(t.dropoff_location);
-                html += ' &middot; Requested by ' + escapeHtml(t.requestor);
                 html += '</div>';
                 if (t.status === 'approved' && !t.startability.startable) {
                     html += '<div class="trip-blocked-reason">' + escapeHtml(t.startability.reason) + '</div>';
