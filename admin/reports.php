@@ -165,7 +165,12 @@ if ($report_type == 'cars') {
                SUM(CASE WHEN a.status = 'completed' THEN 1 ELSE 0 END) as completed_trips,
                SUM(CASE WHEN a.status = 'in_progress' THEN 1 ELSE 0 END) as current_trips,
                SUM(CASE WHEN a.status = 'approved' THEN 1 ELSE 0 END) as approved_trips,
-               SUM(CASE WHEN a.status = 'cancelled' THEN 1 ELSE 0 END) as cancelled_trips
+               SUM(CASE WHEN a.status = 'cancelled' THEN 1 ELSE 0 END) as cancelled_trips,
+               AVG(
+                 CASE WHEN a.status IN ('completed','in_progress') 
+                      THEN (SELECT COUNT(*) FROM tbl_allocated_passengers ap WHERE ap.allocation_id = a.allocation_id)
+                      ELSE NULL END
+               ) as avg_passengers
         FROM tbl_cars c
         LEFT JOIN tbl_allocations a ON c.car_id = a.car_id
         GROUP BY c.car_id
@@ -324,18 +329,14 @@ if (isset($_GET['export'])) {
             ]);
         }
     } elseif ($report_type == 'cars') {
-        fputcsv($output, ['Brand', 'Plate Number', 'Parking', 'Total Trips', 'Completed', 'Cancelled', 'Completion Rate']);
+        fputcsv($output, ['Brand', 'Plate Number', 'Parking', 'Capacity', 'Total Trips', 'Completed', 'Cancelled', 'Completion Rate']);
         foreach ($export_data as $c) {
             $rate = $c['total_trips'] > 0 ? round(($c['completed_trips'] / $c['total_trips']) * 100, 1) : 0;
             fputcsv($output, [
-                $c['brand'],
-                $c['plate_number'],
-                $c['parking'] ?? '',
-                $c['total_trips'],
-                $c['completed_trips'],
-                $c['cancelled_trips'] ?? 0,
-                $rate . '%'
-            ]);
+                    $c['brand'], $c['plate_number'], $c['parking'] ?? '', 
+                    (int)($c['capacity'] ?? 4),
+                    $c['total_trips'], $c['completed_trips'], $c['cancelled_trips'] ?? 0, $rate . '%'
+                ]);
         }
     }
     fclose($output);
@@ -916,6 +917,8 @@ $export_pdf_query = http_build_query($export_pdf_params);
                                     <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Brand</th>
                                     <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Plate Number</th>
                                     <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Parking</th>
+                                    <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Capacity</th>
+                                    <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Average Load</th>
                                     <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Total Trips</th>
                                     <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Completed</th>
                                     <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Cancelled</th>
@@ -927,11 +930,24 @@ $export_pdf_query = http_build_query($export_pdf_params);
                                 <?php foreach($report_data as $c): 
                                     $rate = $c['total_trips'] > 0 ? round(($c['completed_trips'] / $c['total_trips']) * 100, 1) : 0;
                                     $rate_class = $rate >= 80 ? 'rate-high' : ($rate >= 50 ? 'rate-medium' : 'rate-low');
+                                    $cap = (int)($c['capacity'] ?? 4);
+                                    $avg_load = $c['avg_passengers'] !== null ? round($c['avg_passengers'], 1) : null;
+                                    $over_capacity = $avg_load !== null && $avg_load > $cap;
                                 ?>
                                 <tr>
                                     <td style="padding:6px 10px; border-bottom:1px solid #f1f3f5;"><strong><?= htmlspecialchars($c['brand']) ?></strong></td>
                                     <td style="padding:6px 10px; border-bottom:1px solid #f1f3f5;"><?= htmlspecialchars($c['plate_number']) ?></td>
                                     <td style="padding:6px 10px; border-bottom:1px solid #f1f3f5;"><?= htmlspecialchars($c['parking'] ?? '-') ?></td>
+                                    <td style="padding:6px 10px; border-bottom:1px solid #f1f3f5;"><?= $cap ?> pax</td>
+                                    <td style="padding:6px 10px; border-bottom:1px solid #f1f3f5;">
+                                        <?php if ($avg_load !== null): ?>
+                                            <span style="<?= $over_capacity ? 'color:#c62828; font-weight:600;' : '' ?>">
+                                                <?= $avg_load ?> pax<?= $over_capacity ? ' ⚠' : '' ?>
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="text-muted">-</span>
+                                        <?php endif; ?>
+                                    </td>
                                     <td style="padding:6px 10px; border-bottom:1px solid #f1f3f5;"><?= $c['total_trips'] ?></td>
                                     <td style="padding:6px 10px; border-bottom:1px solid #f1f3f5;"><?= $c['completed_trips'] ?></td>
                                     <td style="padding:6px 10px; border-bottom:1px solid #f1f3f5; color:<?= ($c['cancelled_trips'] ?? 0) > 0 ? '#c62828' : 'inherit' ?>;"><?= $c['cancelled_trips'] ?? 0 ?></td>
@@ -1073,7 +1089,7 @@ $export_pdf_query = http_build_query($export_pdf_params);
             $('#carUtilizationTable').DataTable({
                 pageLength: 10,
                 lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-                order: [[3, 'desc']],
+                order: [[5, 'desc']],
                 columnDefs: [
                     { orderable: false, targets: [2] }
                 ],

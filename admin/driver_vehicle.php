@@ -125,10 +125,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_car_ajax'])) {
     $parking = trim($_POST['parking'] ?? '');
     $coding_day = $_POST['coding_day'] ?? '';
     $status = $_POST['status'] ?? 'available';
-    
-    $stmt = $pdo->prepare("INSERT INTO tbl_cars (brand, plate_number, parking, coding_day, status, status_updated_at) VALUES (?, ?, ?, ?, ?, NOW())");
-    $stmt->execute([$brand, $plate_number, $parking, $coding_day, $status]);
-    
+    $capacity = (int)($_POST['capacity'] ?? 4);
+    if ($capacity < 1) $capacity = 1;
+
+    $stmt = $pdo->prepare("INSERT INTO tbl_cars (brand, plate_number, parking, coding_day, capacity, status, status_updated_at) VALUES (?, ?, ?, ?, ?, ?, NOW())");
+    $stmt->execute([$brand, $plate_number, $parking, $coding_day, $capacity, $status]);
+
     echo json_encode(['success' => true, 'message' => 'Car added successfully!', 'car_id' => $pdo->lastInsertId()]);
     exit();
 }
@@ -141,9 +143,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['edit_car_ajax'])) {
     $parking = trim($_POST['parking'] ?? '');
     $coding_day = $_POST['coding_day'] ?? '';
     $status = $_POST['status'] ?? 'available';
-    
-    $stmt = $pdo->prepare("UPDATE tbl_cars SET brand = ?, plate_number = ?, parking = ?, coding_day = ?, status = ?, status_updated_at = NOW() WHERE car_id = ?");
-    $stmt->execute([$brand, $plate_number, $parking, $coding_day, $status, $car_id]);
+    $capacity = (int)($_POST['capacity'] ?? 4);
+    if ($capacity < 1) $capacity = 1;
+
+    $stmt = $pdo->prepare("UPDATE tbl_cars SET brand = ?, plate_number = ?, parking = ?, coding_day = ?, capacity = ?, status = ?, status_updated_at = NOW() WHERE car_id = ?");
+    $stmt->execute([$brand, $plate_number, $parking, $coding_day, $capacity, $status, $car_id]);
     
     echo json_encode(['success' => true, 'message' => 'Car updated successfully!']);
     exit();
@@ -367,6 +371,10 @@ $all_cars_dropdown = $pdo->query("
                         <label for="add_car_coding">Coding Day (Optional)</label>
                     </div>
                     <div class="form-group floating-group">
+                        <input type="number" class="form-control-modern" placeholder=" " name="capacity" id="add_car_capacity" min="1" max="50" value="4" required>
+                        <label for="add_car_capacity">Passenger Capacity <span class="required">*</span></label>
+                    </div>
+                    <div class="form-group floating-group">
                         <select class="form-control-modern" name="status" id="add_car_status" required>
                             <option value="available">Available</option>
                             <option value="under_maintenance">Under Maintenance</option>
@@ -415,6 +423,10 @@ $all_cars_dropdown = $pdo->query("
                             <option value="Sunday">Sunday</option>
                         </select>
                         <label for="edit_car_coding">Coding Day (Optional)</label>
+                    </div>
+                    <div class="form-group floating-group">
+                        <input type="number" class="form-control-modern" placeholder=" " name="capacity" id="edit_car_capacity" min="1" max="50" required>
+                        <label for="edit_car_capacity">Passenger Capacity <span class="required">*</span></label>
                     </div>
                     <div class="form-group floating-group">
                         <select class="form-control-modern" name="status" id="edit_car_status" required>
@@ -626,6 +638,7 @@ $all_cars_dropdown = $pdo->query("
                                     <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Coding Day</th>
                                     <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Assignment</th>
                                     <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Status</th>
+                                    <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Capacity</th>
                                     <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Assigned To</th>
                                     <th style="text-align:left; padding:8px 10px; background:#f8f9fa; border-bottom:2px solid #dee2e6; font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:#6c757d;">Actions</th>
                                 </tr>
@@ -669,6 +682,9 @@ $all_cars_dropdown = $pdo->query("
                                         ?>">
                                             <?= str_replace('_', ' ', $c['status']) ?>
                                         </span>
+                                    </td>
+                                    <td style="padding:6px 10px; border-bottom:1px solid #f1f3f5;">
+                                        <?= (int)($c['capacity'] ?? 4) ?> pax
                                     </td>
                                     <td style="padding:6px 10px; border-bottom:1px solid #f1f3f5;">
                                         <?php if ($is_assigned): ?>
@@ -790,6 +806,7 @@ $all_cars_dropdown = $pdo->query("
         document.getElementById('edit_car_parking').value = car.parking || '';
         document.getElementById('edit_car_coding').value = car.coding_day || '';
         document.getElementById('edit_car_status').value = car.status || 'available';
+        document.getElementById('edit_car_capacity').value = car.capacity || 4;
         document.getElementById('editCarModal').classList.add('active');
         document.body.style.overflow = 'hidden';
         document.getElementById('editCarMessage').innerHTML = '';

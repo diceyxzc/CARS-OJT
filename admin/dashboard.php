@@ -250,7 +250,6 @@ $upcoming_trips = $upcoming_trips->fetchAll();
 // gives the Status column a numeric sort key so DataTables' own default
 // order doesn't undo the in_progress-first prioritization from the SQL.
 $status_priority = ['in_progress' => 0, 'approved' => 1, 'completed' => 2];
-
 ?>
 <!DOCTYPE html>
 <html>
@@ -850,6 +849,12 @@ $status_priority = ['in_progress' => 0, 'approved' => 1, 'completed' => 2];
     .dt-custom table.dataTable tbody td .badge {
         white-space: nowrap;
         display: inline-block;
+    }
+    .dt-custom table.dataTable tbody tr:nth-child(odd) {
+        background: #ffffff;
+    }
+    .dt-custom table.dataTable tbody tr:nth-child(even) {
+        background: #f7f7f9;
     }
     .dt-custom table.dataTable tbody tr:hover {
         background: #f8f9ff !important;

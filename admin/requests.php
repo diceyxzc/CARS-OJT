@@ -49,7 +49,7 @@ $all_drivers = $pdo->query("
 $all_cars = $pdo->query("SELECT * FROM tbl_cars ORDER BY brand")->fetchAll();
 
 $all_drivers_with_car = $pdo->query("
-    SELECT d.*, c.brand, c.plate_number, c.parking, c.coding_day 
+    SELECT d.*, c.brand, c.plate_number, c.parking, c.coding_day, c.capacity 
     FROM tbl_drivers d 
     JOIN tbl_cars c ON d.car_id = c.car_id 
     WHERE d.status = 'active' AND c.status != 'under_maintenance'
@@ -310,14 +310,19 @@ if (isset($_POST['delete_passenger_ajax'])) {
     $passenger_id = $_POST['passenger_id'];
     $user_id = $_SESSION['user_id'];
     
-    $check = $pdo->prepare("SELECT COUNT(*) FROM tbl_allocated_passengers WHERE passenger_id = ?");
+    $check = $pdo->prepare("
+        SELECT COUNT(*) 
+        FROM tbl_allocated_passengers ap
+        JOIN tbl_allocations a ON a.allocation_id = ap.allocation_id
+        WHERE ap.passenger_id = ? AND a.status NOT IN ('cancelled', 'declined')
+    ");
     $check->execute([$passenger_id]);
     $count = $check->fetchColumn();
     
     if ($count > 0) {
         echo json_encode([
             'success' => false, 
-            'message' => "Cannot delete: Passenger is assigned to $count trip(s). Remove from trips first."
+            'message' => "Cannot delete: Passenger is assigned to $count active trip(s). Remove from trips first."
         ]);
         exit();
     }
@@ -379,8 +384,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['direct'])) {
             $skipped_dates = [];
 
             $range_dropoff = $_POST['dropoff_time'] ?? date('H:i:s', strtotime($_POST['pickup_time'] . ' + 1 hour'));
+            $car_coding_stmt = $pdo->prepare("SELECT coding_day FROM tbl_cars WHERE car_id = ?");
+            $car_coding_stmt->execute([$_POST['car_id']]);
+            $car_coding_day = $car_coding_stmt->fetchColumn();
 
             foreach ($dates_to_insert as $date) {
+                // Skips coding dates in date range
+                if ($date_type === 'range' && !empty($car_coding_day)) {
+                    $day_of_week = date('l', strtotime($date)); // e.g. "Monday"
+                    if (strcasecmp($car_coding_day, $day_of_week) === 0) {
+                        $skipped_dates[] = date('M d', strtotime($date)) . ' (coding day)';
+                        continue;
+                    }
+                }
+                
                 // Check if car is available
                 $check = $pdo->prepare("SELECT * FROM tbl_allocations WHERE car_id = ? AND date = ? AND status IN ('pending', 'approved', 'in_progress') AND pickup_time < ? AND dropoff_time > ?");
                 $check->execute([$_POST['car_id'], $date, $range_dropoff, $_POST['pickup_time']]);
@@ -411,8 +428,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['direct'])) {
                     $combined_remarks_parts[] = 'Purpose: ' . $remarks_input;
                 }
                 $combined_remarks = implode(' | ', $combined_remarks_parts);
+                $start_now = isset($_POST['start_now']) && $date_type !== 'range';
+                $initial_status = $start_now ? 'in_progress' : 'approved';
+                $actual_pickup = $start_now ? normalizeTimeInput($_POST['pickup_time']) : null;
 
-                $stmt = $pdo->prepare("INSERT INTO tbl_allocations (car_id, driver_id, requestor_id, approved_by, date, pickup_time, dropoff_time, pickup_location, dropoff_location, remarks, status, request_number, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'approved', ?, NOW())");
+                $stmt = $pdo->prepare("INSERT INTO tbl_allocations (car_id, driver_id, requestor_id, approved_by, date, pickup_time, dropoff_time, pickup_location, dropoff_location, remarks, status, request_number, actual_pickup_time, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
                 $stmt->execute([
                     $_POST['car_id'], 
                     $_POST['driver_id'], 
@@ -424,10 +444,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['direct'])) {
                     $_POST['pickup_location'],
                     $_POST['dropoff_location'],
                     $combined_remarks,
-                    $request_number
+                    $initial_status,
+                    $request_number,
+                    $actual_pickup
                 ]);
                 $allocation_id = $pdo->lastInsertId();
                 $allocation_ids[] = $allocation_id;
+
+                if ($start_now) {
+                    $car_update = $pdo->prepare("UPDATE tbl_cars SET status = 'in_use', status_updated_at = NOW() WHERE car_id = ?");
+                    $car_update->execute([$_POST['car_id']]);
+                }
                 
                 // Insert passengers for this allocation
                 if (isset($_POST['passengers']) && is_array($_POST['passengers'])) {
@@ -436,8 +463,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['direct'])) {
                     }
                 }
                 
-                $log = $pdo->prepare("INSERT INTO tbl_audit_logs (user_id, action, allocation_id, details, timestamp) VALUES (?, 'created', ?, 'Direct allocation for $date', NOW())");
-                $log->execute([$_SESSION['user_id'], $allocation_id]);
+                $log_detail = $start_now ? "Direct allocation for $date (started immediately)" : "Direct allocation for $date";
+                $log = $pdo->prepare("INSERT INTO tbl_audit_logs (user_id, action, allocation_id, details, timestamp) VALUES (?, 'created', ?, ?, NOW())");
+                $log->execute([$_SESSION['user_id'], $allocation_id, $log_detail]);
                 $success_count++;
             }
             
@@ -465,14 +493,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['direct'])) {
 if (isset($_POST['delete_unused_passengers_ajax'])) {
     $user_id = $_SESSION['user_id'];
 
-    // Find passengers created by this user that have zero allocations
+    // Find passengers created by this user that have zero *active* allocations.
+    // Passengers only linked to cancelled/declined trips should still count as unused.
     $stmt = $pdo->prepare("
         SELECT p.passenger_id 
         FROM tbl_passengers p
         LEFT JOIN tbl_allocated_passengers ap ON ap.passenger_id = p.passenger_id
+        LEFT JOIN tbl_allocations a ON a.allocation_id = ap.allocation_id 
+            AND a.status NOT IN ('cancelled', 'declined')
         WHERE p.created_by = ?
         GROUP BY p.passenger_id
-        HAVING COUNT(ap.allocation_id) = 0
+        HAVING COUNT(a.allocation_id) = 0
     ");
     $stmt->execute([$user_id]);
     $unused_ids = $stmt->fetchAll(PDO::FETCH_COLUMN);
@@ -1266,8 +1297,8 @@ function getTripStartability($pdo, $trip) {
     if ($trip['status'] !== 'approved') {
         return ['startable' => false, 'reason' => 'Trip is not approved.'];
     }
-    if ($trip['date'] !== date('Y-m-d')) {
-        return ['startable' => false, 'reason' => 'Trips can only be started on their scheduled day.'];
+    if ($trip['date'] > date('Y-m-d')) {
+        return ['startable' => false, 'reason' => 'Trips cannot be started before their scheduled day.'];
     }
 
     $check = $pdo->prepare("SELECT COUNT(*) FROM tbl_allocations WHERE driver_id = ? AND date = ? AND status = 'in_progress'");
@@ -1312,7 +1343,7 @@ function getAvailableDrivers($pdo, $date, $pickup_time, $dropoff_time = null) {
     }
     
     $stmt = $pdo->prepare("
-        SELECT d.*, c.brand, c.plate_number, c.parking, c.coding_day 
+        SELECT d.*, c.brand, c.plate_number, c.parking, c.coding_day, c.capacity 
         FROM tbl_drivers d 
         LEFT JOIN tbl_cars c ON d.car_id = c.car_id 
         WHERE d.status = 'active' 
@@ -1846,6 +1877,13 @@ function getAvailableDrivers($pdo, $date, $pickup_time, $dropoff_time = null) {
                         <span class="label">Parking</span>
                         <span class="value" id="approveParking">-</span>
                     </div>
+                    <div class="row">
+                        <span class="label">Capacity</span>
+                        <span class="value" id="approveCapacity">-</span>
+                    </div>
+                </div>
+                <div class="capacity-warning-message" id="approveCapacityWarning" style="display:none; margin-top:8px; padding:8px 12px; background:#fff8e1; border:1px solid #ffcc02; border-radius:6px; font-size:0.8rem; color:#e65100;">
+                    <i class="fas fa-exclamation-triangle"></i> <span id="approveCapacityWarningText"></span>
                 </div>
                 
                 <form method="POST" id="approveForm">
@@ -1939,6 +1977,8 @@ function getAvailableDrivers($pdo, $date, $pickup_time, $dropoff_time = null) {
                 <div class="warning-title">Some Dates Have Conflicts</div>
                 <div class="warning-message">
                     These dates in your range will be <strong>skipped</strong> due to coding-day restrictions or scheduling conflicts. All other dates will still be created.
+                    <br><br>
+                    <span style="color:#e65100; font-weight:600;">If you want to assign a trip on a coding day, do the single date instead — date ranges can't override coding-day restrictions.</span>
                 </div>
                 <div class="warning-details" style="max-height:240px; overflow-y:auto; text-align:left;">
                     <div id="rangeConflictList"></div>
@@ -1961,6 +2001,7 @@ function getAvailableDrivers($pdo, $date, $pickup_time, $dropoff_time = null) {
                     <div class="row"><span class="label">Date:</span><span class="value" id="confirmDate">-</span></div>
                     <div class="row"><span class="label">Departure:</span><span class="value" id="confirmPickupTime">-</span></div>
                     <div class="row"><span class="label">Arrival:</span><span class="value" id="confirmDropoffTime">-</span></div>
+                    <div class="row"><span class="label">Status:</span><span class="value" id="confirmStatus">-</span></div>
                     <div class="row"><span class="label">Driver:</span><span class="value" id="confirmDriver">-</span></div>
                     <div class="row"><span class="label">Car:</span><span class="value" id="confirmCar">-</span></div>
                     <div class="row"><span class="label">Parking:</span><span class="value" id="confirmParking">-</span></div>
@@ -2275,10 +2316,11 @@ function getAvailableDrivers($pdo, $date, $pickup_time, $dropoff_time = null) {
                                     data-brand="<?= $d['brand'] ?>" 
                                     data-plate="<?= $d['plate_number'] ?>" 
                                     data-parking="<?= $d['parking'] ?>"
-                                    data-coding-day="<?= $d['coding_day'] ?>">
+                                    data-coding-day="<?= $d['coding_day'] ?>"
+                                    data-capacity="<?= (int)($d['capacity'] ?? 0) ?>">
                                     <?= htmlspecialchars($d['name']) ?> 
                                     <?php if ($d['car_id']): ?>
-                                        - <?= htmlspecialchars($d['brand']) ?> (<?= htmlspecialchars($d['plate_number']) ?>)
+                                        - <?= htmlspecialchars($d['brand']) ?> (<?= htmlspecialchars($d['plate_number']) ?>) · Seats <?= (int)($d['capacity'] ?? 0) ?>
                                         <?php if ($d['coding_day']): ?>
                                             <span style="color:#c62828; font-size:0.7rem;"> [Coding: <?= htmlspecialchars($d['coding_day']) ?>]</span>
                                         <?php endif; ?>
@@ -2310,9 +2352,16 @@ function getAvailableDrivers($pdo, $date, $pickup_time, $dropoff_time = null) {
                             <span class="label">Parking:</span>
                             <span class="value" id="parkingDisplayText">-</span>
                         </div>
+                        <div class="car-detail">
+                            <span class="label">Capacity:</span>
+                            <span class="value" id="capacityDisplayText">-</span>
+                        </div>
                         <div class="car-detail" id="codingDisplay" style="display:none;">
                             <span class="label">Coding Day:</span>
                             <span class="value coding-warning" id="codingDisplayText">-</span>
+                        </div>
+                        <div class="capacity-warning-message" id="capacityWarning" style="display:none; margin-top:8px; padding:8px 12px; background:#fff8e1; border:1px solid #ffcc02; border-radius:6px; font-size:0.8rem; color:#e65100;">
+                            <i class="fas fa-exclamation-triangle"></i> <span id="capacityWarningText"></span>
                         </div>
                     </div>
 
@@ -2343,7 +2392,6 @@ function getAvailableDrivers($pdo, $date, $pickup_time, $dropoff_time = null) {
                             <?php endforeach; ?>
                         </select>
 
-
                         <div class="add-passenger-form">
                             <div class="form-group" style="flex: 1; min-width: 150px; margin-bottom: 0;">
                                 <input type="text" id="new_passenger_name" placeholder="Enter new passenger name" 
@@ -2362,6 +2410,13 @@ function getAvailableDrivers($pdo, $date, $pickup_time, $dropoff_time = null) {
                             </button>
                         </div>
                         <div id="managePassengersList" style="display:none; margin-top:8px; padding:8px; background:#f8f9fa; border-radius:6px;"></div>
+                    </div>
+
+                    <div class="form-group" style="display:flex; align-items:center; gap:8px; margin:10px 0;">
+                        <input type="checkbox" id="start_now_checkbox" name="start_now" value="1" style="width:auto;">
+                        <label for="start_now_checkbox" style="font-weight:500; font-size:0.85rem; margin:0;">
+                            Check this if this trip already happened (Late Allocation) / is happening now.
+                        </label>
                     </div>
 
                     <button type="submit" class="btn btn-primary" id="directSubmitBtn">Create Trip(s)</button>

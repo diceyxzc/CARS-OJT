@@ -13,12 +13,12 @@ $dropoff_time = $_GET['dropoff'] ?? date('H:i:s', strtotime($pickup_time . ' + 1
 
 // FIXED: Use proper overlap detection
 $stmt = $pdo->prepare("
-    SELECT d.*, c.brand, c.plate_number, c.parking, c.coding_day 
+    SELECT d.*, c.brand, c.plate_number, c.parking, c.coding_day, c.capacity 
     FROM tbl_drivers d 
     LEFT JOIN tbl_cars c ON d.car_id = c.car_id 
     WHERE d.status = 'active' 
     AND c.car_id IS NOT NULL
-    AND c.status != 'under_maintenance'  -- ADD THIS LINE
+    AND c.status != 'under_maintenance'
     AND NOT EXISTS (
         SELECT 1 
         FROM tbl_allocations a 

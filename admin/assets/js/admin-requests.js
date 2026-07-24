@@ -54,10 +54,12 @@ function populateDriverSelect(drivers, availabilityLabel) {
       option.dataset.plate = driver.plate_number || "";
       option.dataset.parking = driver.parking || "";
       option.dataset.codingDay = driver.coding_day || "";
+      option.dataset.capacity = driver.capacity || 0;   // ← ADD THIS LINE
 
       var label = driver.name;
       if (driver.brand) {
         label += " - " + driver.brand + " (" + driver.plate_number + ")";
+        if (driver.capacity) label += " · Seats " + driver.capacity;  // optional but nice for consistency
         if (driver.coding_day) label += " [Coding: " + driver.coding_day + "]";
       }
       option.textContent = label;
@@ -218,7 +220,10 @@ function initPassengerChoices() {
     noResultsText: "No passengers found",
     noChoicesText: "No passengers added yet",
   });
-  select.addEventListener("change", updatePassengerDisplay);
+    select.addEventListener("change", function () {
+    updatePassengerDisplay();
+    checkCapacityWarning();
+  });
 }
 
 function deleteUnusedPassengers() {
@@ -344,7 +349,9 @@ function addPassenger() {
             false,
           );
         }
-        refreshManagePassengersList();
+        if (typeof refreshManagePassengersList === "function") {
+          refreshManagePassengersList();
+        }
         if (messageDiv)
           messageDiv.innerHTML =
             '<span style="color: #2e7d32;">Passenger added successfully!</span>';
@@ -402,7 +409,9 @@ function deletePassenger(passengerId, passengerName) {
             true,
           );
         }
-        refreshManagePassengersList();
+        if (typeof refreshManagePassengersList === "function") {
+          refreshManagePassengersList();
+        }
         if (messageDiv)
           messageDiv.innerHTML =
             '<span style="color: #2e7d32;">' + data.message + "</span>";
@@ -445,6 +454,8 @@ function validatePassengerSelection() {
 // Driver & Car Management
 // ========================================
 
+var _selectedCarCapacity = 0;
+
 function updateCarInfo(driverId) {
   var select = document.getElementById("driver_id");
   if (!select) return;
@@ -453,6 +464,7 @@ function updateCarInfo(driverId) {
   var carIdInput = document.getElementById("car_id");
   var carDisplayText = document.getElementById("carDisplayText");
   var parkingDisplayText = document.getElementById("parkingDisplayText");
+  var capacityDisplayText = document.getElementById("capacityDisplayText");
   var codingDisplay = document.getElementById("codingDisplay");
   var codingDisplayText = document.getElementById("codingDisplayText");
 
@@ -462,10 +474,12 @@ function updateCarInfo(driverId) {
     var parking = selectedOption.dataset.parking || "Not specified";
     var codingDay = selectedOption.dataset.codingDay || "";
     var carId = selectedOption.dataset.carId;
+    _selectedCarCapacity = parseInt(selectedOption.dataset.capacity || "0", 10);
 
     if (carDisplay) carDisplay.classList.add("show");
     if (carDisplayText) carDisplayText.textContent = brand + " (" + plate + ")";
     if (parkingDisplayText) parkingDisplayText.textContent = parking;
+    if (capacityDisplayText) capacityDisplayText.textContent = _selectedCarCapacity + " seat(s)";
     if (carIdInput) carIdInput.value = carId;
 
     if (codingDay && codingDisplay) {
@@ -475,10 +489,30 @@ function updateCarInfo(driverId) {
       codingDisplay.style.display = "none";
     }
   } else {
+    _selectedCarCapacity = 0;
     if (carDisplay) carDisplay.classList.remove("show");
     if (carIdInput) carIdInput.value = "";
     if (codingDisplay) codingDisplay.style.display = "none";
   }
+  checkCapacityWarning();
+}
+
+function checkCapacityWarning() {
+  var passengerSelect = document.getElementById("passengerGrid");
+  var warningBox = document.getElementById("capacityWarning");
+  var warningText = document.getElementById("capacityWarningText");
+  if (!passengerSelect || !warningBox) return;
+
+  var count = passengerSelect.selectedOptions ? passengerSelect.selectedOptions.length : 0;
+
+  if (_selectedCarCapacity > 0 && count > _selectedCarCapacity) {
+    warningText.textContent =
+      count + " passenger(s) selected, but this car only seats " + _selectedCarCapacity + ". Please pick a different driver/car or reduce passengers.";
+    warningBox.style.display = "block";
+    return true;
+  }
+  warningBox.style.display = "none";
+  return false;
 }
 
 // ========================================
@@ -494,6 +528,8 @@ function toggleDateType() {
   var endDateInput = document.getElementById("end_date");
   var travelTypeSingle = document.getElementById("travel_type_single");
   var travelTypeRange = document.getElementById("travel_type_range");
+  var startNowCheckbox = document.getElementById("start_now_checkbox");
+  var startNowGroup = startNowCheckbox ? startNowCheckbox.closest(".form-group") : null;
   filterAvailableDrivers();
 
   for (var i = 0; i < radios.length; i++) {
@@ -503,6 +539,8 @@ function toggleDateType() {
       if (singleDateInput) singleDateInput.removeAttribute("required");
       if (startDateInput) startDateInput.setAttribute("required", "required");
       if (endDateInput) endDateInput.setAttribute("required", "required");
+      if (startNowGroup) startNowGroup.style.display = "none";
+      if (startNowCheckbox) startNowCheckbox.checked = false;
 
       if (travelTypeSingle && travelTypeRange) {
         travelTypeRange.value = travelTypeSingle.value;
@@ -517,6 +555,7 @@ function toggleDateType() {
       if (singleDateInput) singleDateInput.setAttribute("required", "required");
       if (startDateInput) startDateInput.removeAttribute("required");
       if (endDateInput) endDateInput.removeAttribute("required");
+      if (startNowGroup) startNowGroup.style.display = "flex";
 
       if (travelTypeSingle && travelTypeRange) {
         travelTypeSingle.value = travelTypeRange.value;
@@ -535,6 +574,7 @@ function toggleDateType() {
 
 var _reviewDrivers = [];
 var _reviewTripDateRaw = "";
+var _reviewPassengerCount = 0;
 
 function openReviewModal(
   allocationId,
@@ -563,6 +603,7 @@ function openReviewModal(
     _reviewDrivers = [];
   }
   _reviewTripDateRaw = tripDateRaw;
+  _reviewPassengerCount = passengers.length;
 
   document.getElementById("approveRequestor").textContent = requestor;
   document.getElementById("approveEmail").textContent = email || "Not provided";
@@ -601,6 +642,7 @@ function openReviewModal(
       opt.dataset.plate = d.plate_number || "";
       opt.dataset.parking = d.parking || "";
       opt.dataset.codingDay = d.coding_day || "";
+      opt.dataset.capacity = d.capacity || 0;
       var label = d.name;
       if (d.brand) {
         label += " - " + d.brand + " (" + d.plate_number + ")";
@@ -629,31 +671,37 @@ function updateReviewDriverInfo() {
   var select = document.getElementById("reviewDriverSelect");
   var selectedOption = select.options[select.selectedIndex];
   var driverInfo = document.getElementById("driverInfo");
+  var warningBox = document.getElementById("approveCapacityWarning");
+  var warningText = document.getElementById("approveCapacityWarningText");
 
   if (!selectedOption || !selectedOption.value) {
     driverInfo.style.display = "none";
     document.getElementById("approveDriverId").value = "";
+    if (warningBox) warningBox.style.display = "none";
     return;
   }
 
   var driverName = selectedOption.textContent.split(" - ")[0].trim();
   var codingInfo = selectedOption.dataset.codingDay
-    ? ' <span class="coding-warning">(Coding: ' +
-      selectedOption.dataset.codingDay +
-      ")</span>"
+    ? ' <span class="coding-warning">(Coding: ' + selectedOption.dataset.codingDay + ")</span>"
     : "";
+  var capacity = parseInt(selectedOption.dataset.capacity || "0", 10);
 
   document.getElementById("approveDriverName").textContent = driverName;
   document.getElementById("approveCarInfo").innerHTML =
-    (selectedOption.dataset.brand || "N/A") +
-    " (" +
-    (selectedOption.dataset.plate || "N/A") +
-    ")" +
-    codingInfo;
-  document.getElementById("approveParking").textContent =
-    selectedOption.dataset.parking || "Not specified";
+    (selectedOption.dataset.brand || "N/A") + " (" + (selectedOption.dataset.plate || "N/A") + ")" + codingInfo;
+  document.getElementById("approveParking").textContent = selectedOption.dataset.parking || "Not specified";
+  document.getElementById("approveCapacity").textContent = capacity ? capacity + " seat(s)" : "Not specified";
   document.getElementById("approveDriverId").value = selectedOption.value;
   driverInfo.style.display = "block";
+
+  if (capacity > 0 && _reviewPassengerCount > capacity) {
+    warningText.textContent =
+      "This request has " + _reviewPassengerCount + " passenger(s), but this car only seats " + capacity + ". Consider a different driver.";
+    warningBox.style.display = "block";
+  } else if (warningBox) {
+    warningBox.style.display = "none";
+  }
 }
 
 function switchReviewToReject() {
@@ -1236,18 +1284,19 @@ document.addEventListener("keydown", function (e) {
 document.addEventListener("DOMContentLoaded", function () {
   // Set default date to today
   var dateInput = document.getElementById("date");
+  if (dateInput) {
+    dateInput.removeAttribute("min"); 
+  }
   if (dateInput && !dateInput.value) {
     var today = new Date();
     var year = today.getFullYear();
     var month = String(today.getMonth() + 1).padStart(2, "0");
     var day = String(today.getDate()).padStart(2, "0");
     dateInput.value = year + "-" + month + "-" + day;
-    dateInput.min = dateInput.value;
 
     var startDate = document.getElementById("start_date");
-    if (startDate) startDate.min = dateInput.value;
+    if (startDate) startDate.min = ""; 
     var endDate = document.getElementById("end_date");
-    if (endDate) endDate.min = dateInput.value;
   }
 
   // Default pickup time to now, dropoff to +1hr, if empty
@@ -1407,6 +1456,10 @@ function openConfirmModal(formData) {
 
   document.getElementById("confirmModal").classList.add("active");
   document.body.style.overflow = "hidden";
+
+  document.getElementById("confirmStatus").textContent = formData.start_now
+    ? "Direct Outgoing Trip (Late/Ongoing)"
+    : "Scheduled";
 }
 
 function closeConfirmModal() {
@@ -1478,6 +1531,10 @@ document
       var passengerError = document.getElementById("passengerError");
       if (passengerError) passengerError.classList.add("show");
       alert("Please select at least one passenger.");
+      return;
+    }
+    if (checkCapacityWarning()) {
+      alert("Too many passengers for the selected car's capacity. Please choose a different driver or car.");
       return;
     }
     var passengerError = document.getElementById("passengerError");
@@ -1553,6 +1610,7 @@ document
         pickup_location: pickupLocation.value,
         dropoff_location: dropoffLocation.value,
         passengers: passengerNames,
+        start_now: document.getElementById("start_now_checkbox")?.checked || false,
       };
 
       // Store reference to submit the form after confirmation
@@ -1637,39 +1695,18 @@ function closeRangeConflictModal() {
 var rangeConflictPendingCallback = null;
 
 function renderRangeConflictList(conflicts) {
-  var labels = {
-    coding: "Coding day",
-    car_busy: "Car busy",
-    driver_busy: "Driver busy",
-  };
-  var html = conflicts
-    .map(function (c) {
-      var issueText = c.issues
-        .map(function (i) {
-          return labels[i] || i;
-        })
-        .join(", ");
-      var d = new Date(c.date + "T00:00:00");
-      var display = d.toLocaleDateString("en-US", {
-        weekday: "short",
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      });
-      return (
-        '<div style="padding:8px 0; border-bottom:1px solid #ffe0b2;">' +
-        "<strong>" +
-        display +
-        "</strong>" +
-        '<span style="color:#c62828; margin-left:8px; font-size:0.85rem;">' +
-        issueText +
-        "</span>" +
-        "</div>"
-      );
-    })
-    .join("");
-  document.getElementById("rangeConflictList").innerHTML =
-    html || "<p>No conflicts found.</p>";
+  var labels = { coding: "Coding day", car_busy: "Car busy", driver_busy: "Driver busy" };
+  var html = conflicts.map(function (c) {
+    var issueText = c.issues.map(function (i) { return labels[i] || i; }).join(", ");
+    var d = new Date(c.date + "T00:00:00");
+    var display = d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+    var codingNote = c.issues.indexOf("coding") !== -1
+      ? '<div style="font-size:0.75rem; color:#e65100; margin-top:2px;">Use single date mode to override this.</div>'
+      : "";
+    return '<div style="padding:8px 0; border-bottom:1px solid #ffe0b2;"><strong>' + display + '</strong>' +
+      '<span style="color:#c62828; margin-left:8px; font-size:0.85rem;">' + issueText + '</span>' + codingNote + '</div>';
+  }).join("");
+  document.getElementById("rangeConflictList").innerHTML = html || "<p>No conflicts found.</p>";
 }
 
 function checkRangeConflicts(
